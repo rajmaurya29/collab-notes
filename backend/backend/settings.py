@@ -41,13 +41,14 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'channels',
-    'notes'
+    'notes.apps.NotesConfig',
+    'users.apps.UsersConfig'
 ]
 
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'expenses.authentication.CookieJWTAuthentication',
+        'users.authentication.CookieJWTAuthentication',
        
     )
 }
