@@ -1,17 +1,19 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { logout } from '../store/slices/authSlice';
+import { useAppDispatch } from '../store/hooks';
+
 import Logo from '../components/Logo';
 import ThemeToggle from '../components/ThemeToggle';
+import { logoutUser } from '../store/slices/authSlice';
 
 function LogoutPage() {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   // Dispatch logout action on page load to clear auth state
   useEffect(() => {
-    dispatch(logout());
+    dispatch(logoutUser());
   }, [dispatch]);
 
   const handleSignInAgain = () => {

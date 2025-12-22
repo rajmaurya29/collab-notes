@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAppDispatch } from '../store/hooks';
-import { signup } from '../store/slices/authSlice';
 import Logo from '../components/Logo';
 import ThemeToggle from '../components/ThemeToggle';
 import FormInput from '../components/FormInput';
+import axios  from 'axios';
+import { loginUser } from '../store/slices/authSlice';
+const API_URL = import.meta.env.VITE_API_URL as string;
 
 const SignupPage: React.FC = () => {
   const navigate = useNavigate();
@@ -15,7 +17,7 @@ const SignupPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async(e: React.FormEvent) => {
     e.preventDefault();
 
     // Basic validation
@@ -29,8 +31,25 @@ const SignupPage: React.FC = () => {
     }
 
     // Dispatch signup action to Redux
-    dispatch(signup({ username, email, password }));
+    // dispatch(signup({ username, email, password }));
+    try {
+      // Demo-only: simulate async signup
+      new Promise((r) => setTimeout(r, 800));
+      try{  
+              // console.log("Signup:", { "name":username, email, password });
 
+                await axios.post(`${API_URL}/users/register/`,{"name":username,"email":email,"password":password},{withCredentials:true})
+                // console.log(response.data);
+                dispatch(loginUser({"email":email,"password":password}))
+                
+            }
+            catch(error:any){
+                console.log(error.value)
+            }
+      // console.log("Signup:", { "name":username, email, password });
+    } catch (err: any) {  
+      // setError(err?.message || "Signup failed. Please try again.");
+    } 
     // Navigate to dashboard after successful signup
     navigate('/dashboard');
   };

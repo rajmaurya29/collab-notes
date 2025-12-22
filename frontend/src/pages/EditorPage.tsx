@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState } from '../types';
-import { updateNote } from '../store/slices/notesSlice';
+// import { updateNote } from '../store/slices/notesSlice';
 import ThemeToggle from '../components/ThemeToggle';
 
 function EditorPage() {
@@ -11,7 +11,7 @@ function EditorPage() {
   const dispatch = useDispatch();
   
   const note = useSelector((state: RootState) => 
-    state.notes.notes.find(n => n.id === id)
+    state.notes.notes.find(n => n.id ===Number(id))
   );
 
   const [title, setTitle] = useState('');
@@ -24,9 +24,9 @@ function EditorPage() {
   useEffect(() => {
     if (note) {
       setTitle(note.title);
-      setBody(note.body);
+      setBody(note.content);
       if (bodyRef.current) {
-        bodyRef.current.innerHTML = note.body;
+        bodyRef.current.innerHTML = note.content;
       }
     } else if (id) {
       // Note not found, redirect to dashboard
@@ -58,18 +58,18 @@ function EditorPage() {
     }
 
     // Set new timeout for debounced save
-    saveTimeoutRef.current = setTimeout(() => {
-      if (id) {
-        dispatch(updateNote({
-          id,
-          updates: {
-            title: currentTitle,
-            body: currentBody,
-          },
-        }));
-      }
-      setSaveStatus('saved');
-    }, 1000);
+    // saveTimeoutRef.current = setTimeout(() => {
+    //   if (id) {
+    //     dispatch(updateNote({
+    //       id,
+    //       updates: {
+    //         title: currentTitle,
+    //         body: currentBody,
+    //       },
+    //     }));
+    //   }
+    //   setSaveStatus('saved');
+    // }, 1000);
   };
 
   const handleFormat = (command: string) => {

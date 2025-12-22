@@ -1,12 +1,13 @@
 // Core data models
 
 export interface Note {
-  id: string;
+  id: number;
   title: string;
-  body: string;
+  content: string;
   category: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
+  owner: number;
 }
 
 export interface User {
@@ -24,7 +25,8 @@ export interface AuthState {
 
 export interface NotesState {
   notes: Note[];
-  currentNoteId: string | null;
+  loading:boolean,
+  error:any,
 }
 
 export interface ThemeState {
@@ -49,11 +51,11 @@ export interface FormInputProps {
 }
 
 export interface NoteCardProps {
-  id: string;
+  id: number;
   title: string;
   preview: string;
   timestamp: string;
   category: string;
   onClick: () => void;
-  onDelete?: (id: string) => void;
+  onDelete?: (id: number) => void;
 }

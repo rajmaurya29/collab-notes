@@ -1,27 +1,33 @@
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { useState } from 'react';
+import { useAppDispatch } from '../store/hooks';
+
+import { useEffect, useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import NoteCard from '../components/NoteCard';
 import type { RootState } from '../types';
-import { addNote, setCurrentNote, deleteNote } from '../store/slices/notesSlice';
+import { fetchNotes } from '../store/slices/notesSlice';
 
 function DashboardPage() {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const notes = useSelector((state: RootState) => state.notes.notes);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  
+  useEffect(()=>{
+    dispatch(fetchNotes());
+  },[dispatch])
 
   const handleNewNote = () => {
     // Create a new note
     const newNoteData = {
       title: 'Untitled Note',
-      body: '',
+      content: '',
       category: 'Personal',
     };
     
     // Dispatch will set currentNoteId in the reducer
-    dispatch(addNote(newNoteData));
+    // dispatch(addNote(newNoteData));
     
     // Get the newly added note (it will be the last one after dispatch)
     // We need to access the updated state, so we'll navigate in the next tick
@@ -34,14 +40,14 @@ function DashboardPage() {
     }, 0);
   };
 
-  const handleNoteClick = (noteId: string) => {
-    dispatch(setCurrentNote(noteId));
+  const handleNoteClick = (noteId: number) => {
+    // dispatch(setCurrentNote(noteId.toString()));
     navigate(`/editor/${noteId}`);
   };
 
-  const handleDeleteNote = (noteId: string) => {
+  const handleDeleteNote = (noteId: number) => {
     if (window.confirm('Are you sure you want to delete this note?')) {
-      dispatch(deleteNote(noteId));
+      // dispatch(deleteNote(noteId));
     }
   };
 
@@ -70,14 +76,14 @@ function DashboardPage() {
     }
   };
 
-  const getPreview = (body: string, maxLength: number = 100) => {
-    if (body.length <= maxLength) return body;
-    return body.substring(0, maxLength) + '...';
+  const getPreview = (content: string, maxLength: number = 100) => {
+    if (content.length <= maxLength) return content;
+    return content.substring(0, maxLength) + '...';
   };
 
-  // Filter notes based on selected category
+  // Filter notes based on selected category with trimmed comparison
   const filteredNotes = selectedCategory 
-    ? notes.filter(note => note.category === selectedCategory)
+    ? notes.filter(note => note.category?.trim() === selectedCategory.trim())
     : notes;
 
   return (
@@ -107,8 +113,8 @@ function DashboardPage() {
               key={note.id}
               id={note.id}
               title={note.title}
-              preview={getPreview(note.body)}
-              timestamp={formatTimestamp(note.updatedAt)}
+              preview={getPreview(note.content)}
+              timestamp={formatTimestamp(note.updated_at)}
               category={note.category}
               onClick={() => handleNoteClick(note.id)}
               onDelete={handleDeleteNote}

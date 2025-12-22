@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAppDispatch } from '../store/hooks';
-import { login } from '../store/slices/authSlice';
+// import { login } from '../store/slices/authSlice';
 import Logo from '../components/Logo';
 import ThemeToggle from '../components/ThemeToggle';
 import FormInput from '../components/FormInput';
+import { loginUser } from '../store/slices/authSlice';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Basic validation
@@ -22,7 +23,7 @@ const LoginPage: React.FC = () => {
     }
 
     // Dispatch login action to Redux
-    dispatch(login({ email, password }));
+    await dispatch(loginUser({ email, password }));
 
     // Navigate to dashboard after successful login
     navigate('/dashboard');

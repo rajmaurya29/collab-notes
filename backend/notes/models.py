@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 class Note(models.Model):
     title=models.CharField(max_length=20)
     content=models.TextField()
+    category=models.CharField(max_length=20,default="work")
     owner=models.ForeignKey(
         User,
         on_delete=models.CASCADE
