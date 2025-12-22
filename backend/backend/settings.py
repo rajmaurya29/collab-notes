@@ -12,21 +12,29 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "local")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-%1^-afcx*v@7f-hxbv+b!h16s-^jj%@lfd#-*t#1x$m4+8l#!-'
+SECRET_KEY = os.environ.get("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = ENVIRONMENT == "local"
 
-ALLOWED_HOSTS = []
+if ENVIRONMENT == "local":
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+else:
+    ALLOWED_HOSTS = ["https://collab-notes-5j4s.onrender.com"]
+
 
 
 # Application definition
@@ -40,7 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
-    'channels',
+    # 'channels',
     'notes.apps.NotesConfig',
     'users.apps.UsersConfig'
 ]
@@ -94,14 +102,16 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
-
 MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.security.SecurityMiddleware',
+
     'django.contrib.sessions.middleware.SessionMiddleware',
-    
     'django.middleware.csrf.CsrfViewMiddleware',
+
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -109,11 +119,17 @@ MIDDLEWARE = [
 
 
 # CORS_ALLOW_ALL_ORIGINS = True
+if ENVIRONMENT == "local":
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:5173",
+    ]
+else:
+    CORS_ALLOWED_ORIGINS = [
+        "https://your-frontend.onrender.com",
+    ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",   # frontend in dev
-   
-]
+
+
 CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'backend.urls'
@@ -136,7 +152,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
-ASGI_APPLICATION = 'backend.asgi.application'
+# ASGI_APPLICATION = 'backend.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -190,15 +206,27 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
-    }
-}
+# CHANNEL_LAYERS = {
+#     'default': {
+#         'BACKEND': 'channels.layers.InMemoryChannelLayer',
+#     }
+# }
 
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173",
-]
+
+if ENVIRONMENT == "local":
+    CSRF_TRUSTED_ORIGINS = [
+        "http://localhost:5173",
+    ]
+else:
+    CSRF_TRUSTED_ORIGINS = [
+        "https://your-frontend.onrender.com",
+    ]
+
+
+
+if ENVIRONMENT == "production":
+    STATIC_ROOT = BASE_DIR / "staticfiles"
+
 
 # SESSION_COOKIE_SAMESITE = 'None'
 # SESSION_COOKIE_SECURE = False  # True only in HTTPS
