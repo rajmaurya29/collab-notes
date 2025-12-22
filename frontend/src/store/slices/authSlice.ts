@@ -87,6 +87,7 @@ const authSlice = createSlice({
         })
         builder.addCase(logoutUser.fulfilled,(state)=>{
             state.userInfo=null,
+            
             state.loading=false,
             state.error=null
             // localStorage.removeItem("userInfo")

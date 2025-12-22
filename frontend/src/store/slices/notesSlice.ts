@@ -1,6 +1,7 @@
 import { createSlice,createAsyncThunk } from '@reduxjs/toolkit';
 import type { NotesState } from '../../types';
 import axios from 'axios';
+import { logoutUser } from './authSlice';
 // Sample notes data matching backend format
 
 const API_URL = import.meta.env.VITE_API_URL as string;
@@ -103,6 +104,9 @@ const notesSlice = createSlice({
     builder.addCase(fetchNotes.rejected,(state,action)=>{
       state.loading=false,
       state.error=action.payload
+    })
+    builder.addCase(logoutUser.fulfilled,(state)=>{
+      state.notes=[]
     })
   }
 });

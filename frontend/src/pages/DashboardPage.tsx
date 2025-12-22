@@ -13,6 +13,7 @@ function DashboardPage() {
   const dispatch = useAppDispatch();
   const notes = useSelector((state: RootState) => state.notes.notes);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   useEffect(()=>{
     dispatch(fetchNotes());
@@ -87,23 +88,38 @@ const handleNewNote = async () => {
 
   return (
     <div className="dashboard-container">
+      {/* Mobile overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="sidebar-overlay" 
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+      
       <Sidebar 
         onLogout={handleLogout} 
         onCategorySelect={handleCategorySelect}
         activeCategory={selectedCategory}
+        isMobileOpen={isSidebarOpen}
+        onMobileToggle={setIsSidebarOpen}
       />
       
       <main className="dashboard-main">
         <header className="dashboard-header">
-          <h1 className="dashboard-title">
-            {selectedCategory ? `${selectedCategory} Notes` : 'My Notes'}
-          </h1>
-          <button className="new-note-btn" onClick={handleNewNote}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path fillRule="evenodd" clipRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" fill="currentColor"/>
-            </svg>
-            <span>New Note</span>
-          </button>
+          <div className="dashboard-header-left">
+            <button 
+              className="mobile-menu-btn" 
+              onClick={() => setIsSidebarOpen(true)}
+              aria-label="Open menu"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <h1 className="dashboard-title">
+              {selectedCategory ? `${selectedCategory} Notes` : 'My Notes'}
+            </h1>
+          </div>
         </header>
 
         <div className="notes-grid">
@@ -127,6 +143,13 @@ const handleNewNote = async () => {
           </div>
         )}
       </main>
+
+      {/* Floating Action Button for New Note */}
+      <button className="fab-new-note" onClick={handleNewNote} aria-label="Create new note">
+        <svg width="24" height="24" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path fillRule="evenodd" clipRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" fill="currentColor"/>
+        </svg>
+      </button>
     </div>
   );
 }

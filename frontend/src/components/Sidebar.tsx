@@ -8,9 +8,11 @@ interface SidebarProps {
   onLogout?: () => void;
   onCategorySelect?: (category: string | null) => void;
   activeCategory?: string | null;
+  isMobileOpen?: boolean;
+  onMobileToggle?: (isOpen: boolean) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ onLogout, onCategorySelect, activeCategory }) => {
+const Sidebar: React.FC<SidebarProps> = ({ onLogout, onCategorySelect, activeCategory, isMobileOpen = false, onMobileToggle }) => {
   const navigate = useNavigate();
   const [activeItem, setActiveItem] = useState(activeCategory || 'all-notes');
   
@@ -33,6 +35,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout, onCategorySelect, activeCat
     }
     if (onCategorySelect) {
       onCategorySelect(category !== undefined ? category : null);
+    }
+    if (onMobileToggle) {
+      onMobileToggle(false); // Close sidebar on mobile after selection
     }
   };
 
@@ -84,7 +89,17 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout, onCategorySelect, activeCat
   };
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isMobileOpen ? 'sidebar-mobile-open' : ''}`}>
+      <button 
+        className="sidebar-close-btn" 
+        onClick={() => onMobileToggle && onMobileToggle(false)}
+        aria-label="Close sidebar"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+      
       <div className="sidebar-header">
         <Logo />
       </div>
