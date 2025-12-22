@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
 import { useAppDispatch } from '../store/hooks';
 
 import Logo from '../components/Logo';
