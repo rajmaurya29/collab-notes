@@ -33,7 +33,7 @@ DEBUG = ENVIRONMENT == "local"
 if ENVIRONMENT == "local":
     ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 else:
-    ALLOWED_HOSTS = ["https://collab-notes-5j4s.onrender.com"]
+    ALLOWED_HOSTS = ["collab-notes-5j4s.onrender.com"]
 
 
 
@@ -199,7 +199,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
