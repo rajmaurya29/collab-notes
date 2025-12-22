@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { useAppDispatch } from '../store/hooks';
 
 import { useEffect, useState } from 'react';

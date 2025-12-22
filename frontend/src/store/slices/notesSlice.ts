@@ -57,6 +57,23 @@ export const deleteNote=createAsyncThunk(
 }
 )
 
+
+export const updateNote=createAsyncThunk(
+    "updateNote",async ({id,title,content,category}:{id:string,title:string,content:string,category:string},thunkAPI)=>{
+        try{
+            const response= await axios.put(`${API_URL}/notes/${id}/`,{title,content,category},
+              {withCredentials:true}
+            )
+            // console.log(response.data)
+            return response.data;
+        }
+        catch(error:any){
+            return thunkAPI.rejectWithValue(error.message);
+        }
+    
+}
+)
+
 const initialState: NotesState = {
   notes: [],
   loading:false,

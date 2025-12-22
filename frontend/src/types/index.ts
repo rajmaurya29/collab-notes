@@ -8,6 +8,7 @@ export interface Note {
   created_at: string;
   updated_at: string;
   owner: number;
+  ownerName:string;
 }
 
 export interface User {

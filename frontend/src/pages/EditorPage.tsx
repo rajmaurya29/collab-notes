@@ -1,21 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import type { RootState } from '../types';
+import { useAppDispatch } from '../store/hooks';
+
 // import { updateNote } from '../store/slices/notesSlice';
 import ThemeToggle from '../components/ThemeToggle';
+import { updateNote } from '../store/slices/notesSlice';
 
 function EditorPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  
-  const note = useSelector((state: RootState) => 
-    state.notes.notes.find(n => n.id ===Number(id))
-  );
+  const dispatch = useAppDispatch();
+  const { notes, loading } = useSelector((state: RootState) => state.notes);
+  const user = useSelector((state: RootState) => state.auth.user);
+
+  // Convert id to number for comparison
+  const noteId = id ? Number(id) : null;
+  const note = notes.find(n => n.id === noteId);
 
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [category, setCategory] = useState('');
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving'>('saved');
   const bodyRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -25,31 +31,39 @@ function EditorPage() {
     if (note) {
       setTitle(note.title);
       setBody(note.content);
+      setCategory(note.category || '');
       if (bodyRef.current) {
         bodyRef.current.innerHTML = note.content;
       }
-    } else if (id) {
-      // Note not found, redirect to dashboard
+    } else if (id && !loading && notes.length > 0) {
+      // Note not found after loading is complete, redirect to dashboard
+      console.log('Note not found, redirecting to dashboard');
       navigate('/dashboard');
     }
-  }, [note, id, navigate]);
+  }, [note, id, navigate, loading, notes.length]);
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;
     setTitle(newTitle);
-    handleSave(newTitle, body);
+    handleSave(newTitle, body, category);
+  };
+
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newCategory = e.target.value;
+    setCategory(newCategory);
+    handleSave(title, body, newCategory);
   };
 
   const handleBodyInput = () => {
     if (bodyRef.current) {
       const newBody = bodyRef.current.innerHTML;
       setBody(newBody);
-      handleSave(title, newBody);
+      handleSave(title, newBody, category);
     }
   };
 
-  const handleSave = (currentTitle: string, currentBody: string) => {
-    // Show saving status
+  const handleSave = (currentTitle: string, currentBody: string, currentCategory: string) => {
+    // Show saving status (fake animation)
     setSaveStatus('saving');
 
     // Clear existing timeout
@@ -57,19 +71,10 @@ function EditorPage() {
       clearTimeout(saveTimeoutRef.current);
     }
 
-    // Set new timeout for debounced save
-    // saveTimeoutRef.current = setTimeout(() => {
-    //   if (id) {
-    //     dispatch(updateNote({
-    //       id,
-    //       updates: {
-    //         title: currentTitle,
-    //         body: currentBody,
-    //       },
-    //     }));
-    //   }
-    //   setSaveStatus('saved');
-    // }, 1000);
+    // Set timeout to show "saved" status after a short delay (fake save)
+    saveTimeoutRef.current = setTimeout(() => {
+      setSaveStatus('saved');
+    }, 500); // Show "saving" for 500ms then switch to "saved"
   };
 
   const handleFormat = (command: string) => {
@@ -80,6 +85,24 @@ function EditorPage() {
   };
 
   const handleBack = () => {
+    // Clear any pending fake save timeouts
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    // Actually save to backend when back button is clicked
+    if (id) {
+      // dispatch(updateNote({
+      //   updates: {
+      //     title,
+      //     content: body,
+      //     category,
+      //   },
+      // }));
+      dispatch(updateNote({ id,title, content: body, category }));
+      // console.log('Saving to backend:', { id, title, content: body, category });
+    }
+    
     navigate('/dashboard');
   };
 
@@ -92,8 +115,20 @@ function EditorPage() {
     };
   }, []);
 
+  if (loading) {
+    return (
+      <div className="editor-container">
+        <div style={{ padding: '2rem', textAlign: 'center' }}>Loading note...</div>
+      </div>
+    );
+  }
+
   if (!note) {
-    return null;
+    return (
+      <div className="editor-container">
+        <div style={{ padding: '2rem', textAlign: 'center' }}>Note not found...</div>
+      </div>
+    );
   }
 
   return (
@@ -124,55 +159,82 @@ function EditorPage() {
           )}
         </div>
 
-        <ThemeToggle />
+        <div className="editor-nav-right">
+          <div className="editor-owner">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path fillRule="evenodd" clipRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" fill="currentColor"/>
+            </svg>
+            <span>{note.ownerName|| 'Unknown'}</span>
+          </div>
+          <ThemeToggle />
+        </div>
       </nav>
 
       <div className="editor-content">
-        <div className="editor-toolbar">
-          <button 
-            className="toolbar-btn" 
-            onClick={() => handleFormat('bold')}
-            aria-label="Bold"
-            type="button"
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M5 4h6a4 4 0 014 4 4 4 0 01-4 4H5V4z" fill="currentColor"/>
-              <path d="M5 12h7a4 4 0 014 4 4 4 0 01-4 4H5v-8z" fill="currentColor"/>
-            </svg>
-          </button>
+        <div className="editor-controls">
+          <div className="editor-toolbar">
+            <button 
+              className="toolbar-btn" 
+              onClick={() => handleFormat('bold')}
+              aria-label="Bold"
+              type="button"
+            >
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 4h6a4 4 0 014 4 4 4 0 01-4 4H5V4z" fill="currentColor"/>
+                <path d="M5 12h7a4 4 0 014 4 4 4 0 01-4 4H5v-8z" fill="currentColor"/>
+              </svg>
+            </button>
 
-          <button 
-            className="toolbar-btn" 
-            onClick={() => handleFormat('italic')}
-            aria-label="Italic"
-            type="button"
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M8 4h8M4 16h8M11 4l-4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          </button>
+            <button 
+              className="toolbar-btn" 
+              onClick={() => handleFormat('italic')}
+              aria-label="Italic"
+              type="button"
+            >
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 4h8M4 16h8M11 4l-4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </button>
 
-          <button 
-            className="toolbar-btn" 
-            onClick={() => handleFormat('underline')}
-            aria-label="Underline"
-            type="button"
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M5 3v7a5 5 0 0010 0V3M4 18h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          </button>
+            <button 
+              className="toolbar-btn" 
+              onClick={() => handleFormat('underline')}
+              aria-label="Underline"
+              type="button"
+            >
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 3v7a5 5 0 0010 0V3M4 18h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </button>
 
-          <button 
-            className="toolbar-btn" 
-            onClick={() => handleFormat('uppercase')}
-            aria-label="Uppercase"
-            type="button"
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <text x="2" y="15" fontFamily="Arial" fontSize="14" fontWeight="bold" fill="currentColor">AA</text>
-            </svg>
-          </button>
+            <button 
+              className="toolbar-btn" 
+              onClick={() => handleFormat('uppercase')}
+              aria-label="Uppercase"
+              type="button"
+            >
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <text x="2" y="15" fontFamily="Arial" fontSize="14" fontWeight="bold" fill="currentColor">AA</text>
+              </svg>
+            </button>
+          </div>
+
+          <div className="category-section">
+            <label htmlFor="category-input" className="category-label">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 4a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 12a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1v-4zM11 4a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V4zM11 12a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" fill="currentColor"/>
+              </svg>
+              Category
+            </label>
+            <input
+              id="category-input"
+              type="text"
+              className="category-input"
+              placeholder="Add category..."
+              value={category}
+              onChange={handleCategoryChange}
+            />
+          </div>
         </div>
 
         <input

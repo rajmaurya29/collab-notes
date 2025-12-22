@@ -8,6 +8,7 @@ from notes.serializers import NoteSerializer
 from rest_framework.status import *
 
 @api_view(['POST','GET'])
+@permission_classes([IsAuthenticated])
 def All_New_Note(request):
     if request.method=='GET':
         notes=Note.objects.filter(owner=request.user).order_by('-created_at')
@@ -25,11 +26,11 @@ def All_New_Note(request):
     
 
 @api_view(['GET','PUT','DELETE'])
+@permission_classes([IsAuthenticated])
 def Individual_Note(request,id):
     if request.method=="GET":
         try:
-            note=Note.objects.get(
-                owner=request.user,
+            note=Note.objects.get(                
                 id=id)
             serializer=NoteSerializer(note,many=False)
             return Response(serializer.data)
@@ -43,6 +44,7 @@ def Individual_Note(request,id):
                id=id)  
             note.title=request.data['title']
             note.content=request.data['content']
+            note.category=request.data['category']
             serializer=NoteSerializer(note,many=False)
             note.save()
             return Response(serializer.data)
