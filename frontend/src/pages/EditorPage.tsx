@@ -13,7 +13,6 @@ function EditorPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { notes, loading } = useSelector((state: RootState) => state.notes);
-  const user = useSelector((state: RootState) => state.auth.user);
 
   // Convert id to number for comparison
   const noteId = id ? Number(id) : null;
@@ -22,9 +21,7 @@ function EditorPage() {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [category, setCategory] = useState('');
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving'>('saved');
   const bodyRef = useRef<HTMLDivElement>(null);
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load note data when component mounts or note changes
   useEffect(() => {
@@ -45,36 +42,18 @@ function EditorPage() {
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;
     setTitle(newTitle);
-    handleSave(newTitle, body, category);
   };
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newCategory = e.target.value;
     setCategory(newCategory);
-    handleSave(title, body, newCategory);
   };
 
   const handleBodyInput = () => {
     if (bodyRef.current) {
       const newBody = bodyRef.current.innerHTML;
       setBody(newBody);
-      handleSave(title, newBody, category);
     }
-  };
-
-  const handleSave = (currentTitle: string, currentBody: string, currentCategory: string) => {
-    // Show saving status (fake animation)
-    setSaveStatus('saving');
-
-    // Clear existing timeout
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-
-    // Set timeout to show "saved" status after a short delay (fake save)
-    saveTimeoutRef.current = setTimeout(() => {
-      setSaveStatus('saved');
-    }, 500); // Show "saving" for 500ms then switch to "saved"
   };
 
   const handleFormat = (command: string) => {
@@ -85,35 +64,13 @@ function EditorPage() {
   };
 
   const handleBack = () => {
-    // Clear any pending fake save timeouts
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-    
     // Actually save to backend when back button is clicked
     if (id) {
-      // dispatch(updateNote({
-      //   updates: {
-      //     title,
-      //     content: body,
-      //     category,
-      //   },
-      // }));
-      dispatch(updateNote({ id,title, content: body, category }));
-      // console.log('Saving to backend:', { id, title, content: body, category });
+      dispatch(updateNote({ id, title, content: body, category }));
     }
     
     navigate('/dashboard');
   };
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-    };
-  }, []);
 
   if (loading) {
     return (
@@ -142,21 +99,10 @@ function EditorPage() {
         </button>
 
         <div className="save-status">
-          {saveStatus === 'saving' ? (
-            <>
-              <svg className="save-icon saving" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="2" strokeDasharray="4 4"/>
-              </svg>
-              <span>Saving...</span>
-            </>
-          ) : (
-            <>
-              <svg className="save-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path fillRule="evenodd" clipRule="evenodd" d="M13.854 3.646a.5.5 0 010 .708l-7 7a.5.5 0 01-.708 0l-3.5-3.5a.5.5 0 11.708-.708L6.5 10.293l6.646-6.647a.5.5 0 01.708 0z" fill="currentColor"/>
-              </svg>
-              <span>All changes saved</span>
-            </>
-          )}
+          <svg className="save-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fillRule="evenodd" clipRule="evenodd" d="M13.854 3.646a.5.5 0 010 .708l-7 7a.5.5 0 01-.708 0l-3.5-3.5a.5.5 0 11.708-.708L6.5 10.293l6.646-6.647a.5.5 0 01.708 0z" fill="currentColor"/>
+          </svg>
+          <span>All changes saved</span>
         </div>
 
         <div className="editor-nav-right">
