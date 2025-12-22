@@ -227,8 +227,8 @@ else:
 
 
 
-if ENVIRONMENT == "production":
-    STATIC_ROOT = BASE_DIR / "staticfiles"
+# if ENVIRONMENT == "production":
+#     STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
 # SESSION_COOKIE_SAMESITE = 'None'
