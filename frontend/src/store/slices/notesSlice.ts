@@ -23,6 +23,40 @@ export const fetchNotes=createAsyncThunk(
 )
 
 
+
+export const addNote=createAsyncThunk(
+    "addNote",async ({title,content,category}:{title:string,content:string,category:string},thunkAPI)=>{
+        try{
+            const response= await axios.post(`${API_URL}/notes/`,{title,content,category},
+              {withCredentials:true}
+            )
+            console.log(response.data)
+            return response.data;
+        }
+        catch(error:any){
+            return thunkAPI.rejectWithValue(error.message);
+        }
+    
+}
+)
+
+
+export const deleteNote=createAsyncThunk(
+    "deleteNote",async ({noteId}:{noteId:number},thunkAPI)=>{
+        try{
+            const response= await axios.delete(`${API_URL}/notes/${noteId}/`,
+              {withCredentials:true}
+            )
+            // console.log(response.data)
+            return response.data;
+        }
+        catch(error:any){
+            return thunkAPI.rejectWithValue(error.message);
+        }
+    
+}
+)
+
 const initialState: NotesState = {
   notes: [],
   loading:false,

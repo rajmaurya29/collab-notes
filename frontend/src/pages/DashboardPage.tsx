@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import NoteCard from '../components/NoteCard';
 import type { RootState } from '../types';
-import { fetchNotes } from '../store/slices/notesSlice';
+import { addNote, deleteNote, fetchNotes } from '../store/slices/notesSlice';
 
 function DashboardPage() {
   const navigate = useNavigate();
@@ -18,36 +18,35 @@ function DashboardPage() {
     dispatch(fetchNotes());
   },[dispatch])
 
-  const handleNewNote = () => {
-    // Create a new note
-    const newNoteData = {
-      title: 'Untitled Note',
-      content: '',
-      category: 'Personal',
-    };
-    
-    // Dispatch will set currentNoteId in the reducer
-    // dispatch(addNote(newNoteData));
-    
-    // Get the newly added note (it will be the last one after dispatch)
-    // We need to access the updated state, so we'll navigate in the next tick
-    setTimeout(() => {
-      const state = notes;
-      const newNote = state[state.length - 1];
-      if (newNote) {
-        navigate(`/editor/${newNote.id}`);
-      }
-    }, 0);
+  
+const handleNewNote = async () => {
+  const newNoteData = {
+    title: 'Untitled Note',
+    content: 'Write your content',
+    category: 'Personal',
   };
+
+  try {
+    const newNote = await dispatch(addNote(newNoteData)).unwrap();
+    // newNote is the payload returned from the thunk
+    await dispatch(fetchNotes());
+    // console.log(newNote.id)
+    navigate(`/editor/${newNote.id}`);
+  } catch (err) {
+    console.error("Failed to create note", err);
+  }
+};
+
 
   const handleNoteClick = (noteId: number) => {
     // dispatch(setCurrentNote(noteId.toString()));
     navigate(`/editor/${noteId}`);
   };
 
-  const handleDeleteNote = (noteId: number) => {
+  const handleDeleteNote = async(noteId: number) => {
     if (window.confirm('Are you sure you want to delete this note?')) {
-      // dispatch(deleteNote(noteId));
+      await dispatch(deleteNote({noteId}));
+      dispatch(fetchNotes())
     }
   };
 
