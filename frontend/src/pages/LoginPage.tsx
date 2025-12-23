@@ -24,15 +24,17 @@ const LoginPage: React.FC = () => {
       return;
     }
 
+    setIsLoading(true);
     try {
-      setIsLoading(true);
       // Dispatch login action to Redux
       await dispatch(loginUser({ email, password })).unwrap();
 
-      // Navigate to dashboard after successful login
+      // Navigate to dashboard only after successful login
       navigate('/dashboard');
     } catch (err) {
       console.error("Login failed", err);
+      // Optionally show error message to user
+      alert('Login failed. Please check your credentials and try again.');
     } finally {
       setIsLoading(false);
     }
