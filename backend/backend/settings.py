@@ -125,6 +125,7 @@ if ENVIRONMENT == "local":
     ]
 else:
     CORS_ALLOWED_ORIGINS = [
+        "http://localhost:5173",
         "https://collab-notes-liard.vercel.app",
     ]
 
@@ -222,6 +223,7 @@ if ENVIRONMENT == "local":
     ]
 else:
     CSRF_TRUSTED_ORIGINS = [
+        "http://localhost:5173",
         "https://collab-notes-liard.vercel.app",
     ]
 
