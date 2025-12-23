@@ -5,15 +5,17 @@ import { useAppDispatch } from '../store/hooks';
 import { useEffect, useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import NoteCard from '../components/NoteCard';
+import Loader from '../components/Loader';
 import type { RootState } from '../types';
 import { addNote, deleteNote, fetchNotes } from '../store/slices/notesSlice';
 
 function DashboardPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const notes = useSelector((state: RootState) => state.notes.notes);
+  const { notes, loading } = useSelector((state: RootState) => state.notes);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isCreatingNote, setIsCreatingNote] = useState(false);
   
   useEffect(()=>{
     dispatch(fetchNotes());
@@ -28,6 +30,7 @@ const handleNewNote = async () => {
   };
 
   try {
+    setIsCreatingNote(true);
     const newNote = await dispatch(addNote(newNoteData)).unwrap();
     // newNote is the payload returned from the thunk
     await dispatch(fetchNotes());
@@ -35,6 +38,8 @@ const handleNewNote = async () => {
     navigate(`/editor/${newNote.id}`);
   } catch (err) {
     console.error("Failed to create note", err);
+  } finally {
+    setIsCreatingNote(false);
   }
 };
 
@@ -86,8 +91,13 @@ const handleNewNote = async () => {
     ? notes.filter(note => note.category?.trim() === selectedCategory.trim())
     : notes;
 
+  if (loading) {
+    return <Loader fullScreen message="Loading your notes..." />;
+  }
+
   return (
     <div className="dashboard-container">
+      {isCreatingNote && <Loader fullScreen message="Creating new note..." />}
       {/* Mobile overlay */}
       {isSidebarOpen && (
         <div 

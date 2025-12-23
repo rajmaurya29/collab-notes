@@ -1579,6 +1579,12 @@ textarea,
     padding: 1rem;
   }
 
+  .logout-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
   .logout-card {
     padding: 2rem 1.5rem;
   }
@@ -1604,12 +1610,6 @@ textarea,
 
 /* Extra small mobile */
 @media (max-width: 480px) {
-  .logout-header {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: flex-start;
-  }
-
   .signup-card {
     padding: 1.25rem 1rem;
   }
@@ -1710,4 +1710,68 @@ textarea,
   .notes-grid {
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   }
+}
+
+/* ============================================
+   Loader Component Styles
+   ============================================ */
+
+.loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.loader-fullscreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--bg-body);
+  z-index: 9999;
+}
+
+.loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loader-small .loader-spinner {
+  width: 24px;
+  height: 24px;
+  border-width: 2px;
+}
+
+.loader-medium .loader-spinner {
+  width: 40px;
+  height: 40px;
+  border-width: 3px;
+}
+
+.loader-large .loader-spinner {
+  width: 60px;
+  height: 60px;
+  border-width: 4px;
+}
+
+.loader-spinner {
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.loader-message {
+  margin-top: 1rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-align: center;
 }

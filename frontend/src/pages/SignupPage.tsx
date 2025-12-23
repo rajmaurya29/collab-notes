@@ -4,6 +4,7 @@ import { useAppDispatch } from '../store/hooks';
 import Logo from '../components/Logo';
 import ThemeToggle from '../components/ThemeToggle';
 import FormInput from '../components/FormInput';
+import Loader from '../components/Loader';
 import axios  from 'axios';
 import { loginUser } from '../store/slices/authSlice';
 const API_URL = import.meta.env.VITE_API_URL as string;
@@ -16,6 +17,7 @@ const SignupPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async(e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +35,7 @@ const SignupPage: React.FC = () => {
     // Dispatch signup action to Redux
     // dispatch(signup({ username, email, password }));
     try {
+      setIsLoading(true);
       // Demo-only: simulate async signup
       new Promise((r) => setTimeout(r, 800));
       try{  
@@ -40,22 +43,25 @@ const SignupPage: React.FC = () => {
 
                 await axios.post(`${API_URL}/users/register/`,{"name":username,"email":email,"password":password},{withCredentials:true})
                 // console.log(response.data);
-                dispatch(loginUser({"email":email,"password":password}))
+                await dispatch(loginUser({"email":email,"password":password})).unwrap();
                 
             }
             catch(error:any){
                 console.log(error.value)
             }
       // console.log("Signup:", { "name":username, email, password });
+      // Navigate to dashboard after successful signup
+      navigate('/dashboard');
     } catch (err: any) {  
-      // setError(err?.message || "Signup failed. Please try again.");
-    } 
-    // Navigate to dashboard after successful signup
-    navigate('/dashboard');
+      console.error("Signup failed", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="signup-page">
+      {isLoading && <Loader fullScreen message="Creating your account..." />}
       <div className="signup-container">
         <div className="signup-header">
           <Logo />

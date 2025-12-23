@@ -5,6 +5,7 @@ import { useAppDispatch } from '../store/hooks';
 import Logo from '../components/Logo';
 import ThemeToggle from '../components/ThemeToggle';
 import FormInput from '../components/FormInput';
+import Loader from '../components/Loader';
 import { loginUser } from '../store/slices/authSlice';
 
 const LoginPage: React.FC = () => {
@@ -13,6 +14,7 @@ const LoginPage: React.FC = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,11 +24,18 @@ const LoginPage: React.FC = () => {
       return;
     }
 
-    // Dispatch login action to Redux
-    await dispatch(loginUser({ email, password }));
+    try {
+      setIsLoading(true);
+      // Dispatch login action to Redux
+      await dispatch(loginUser({ email, password })).unwrap();
 
-    // Navigate to dashboard after successful login
-    navigate('/dashboard');
+      // Navigate to dashboard after successful login
+      navigate('/dashboard');
+    } catch (err) {
+      console.error("Login failed", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleForgotPassword = (e: React.MouseEvent) => {
@@ -36,6 +45,7 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="login-page">
+      {isLoading && <Loader fullScreen message="Signing in..." />}
       <div className="login-container">
         <div className="login-header">
           <Logo />
