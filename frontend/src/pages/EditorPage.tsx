@@ -6,6 +6,7 @@ import { useAppDispatch } from '../store/hooks';
 
 // import { updateNote } from '../store/slices/notesSlice';
 import ThemeToggle from '../components/ThemeToggle';
+import Loader from '../components/Loader';
 import { updateNote } from '../store/slices/notesSlice';
 
 function EditorPage() {
@@ -21,6 +22,7 @@ function EditorPage() {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [category, setCategory] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
 
   // Load note data when component mounts or note changes
@@ -63,33 +65,33 @@ function EditorPage() {
     }
   };
 
-  const handleBack = () => {
+  const handleBack = async () => {
     // Actually save to backend when back button is clicked
     if (id) {
-      dispatch(updateNote({ id, title, content: body, category }));
+      try {
+        setIsSaving(true);
+        await dispatch(updateNote({ id, title, content: body, category })).unwrap();
+      } catch (err) {
+        console.error("Failed to save note", err);
+      } finally {
+        setIsSaving(false);
+      }
     }
     
     navigate('/dashboard');
   };
 
   if (loading) {
-    return (
-      <div className="editor-container">
-        <div style={{ padding: '2rem', textAlign: 'center' }}>Loading note...</div>
-      </div>
-    );
+    return <Loader fullScreen message="Loading note..." />;
   }
 
   if (!note) {
-    return (
-      <div className="editor-container">
-        <div style={{ padding: '2rem', textAlign: 'center' }}>Note not found...</div>
-      </div>
-    );
+    return <Loader fullScreen message="Note not found..." />;
   }
 
   return (
     <div className="editor-container">
+      {isSaving && <Loader fullScreen message="Saving note..." />}
       <nav className="editor-nav">
         <button className="back-btn" onClick={handleBack} aria-label="Back to dashboard">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
