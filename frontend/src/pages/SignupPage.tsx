@@ -32,28 +32,21 @@ const SignupPage: React.FC = () => {
       return;
     }
 
-    // Dispatch signup action to Redux
-    // dispatch(signup({ username, email, password }));
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      // Demo-only: simulate async signup
-      new Promise((r) => setTimeout(r, 800));
-      try{  
-              // console.log("Signup:", { "name":username, email, password });
-
-                await axios.post(`${API_URL}/users/register/`,{"name":username,"email":email,"password":password},{withCredentials:true})
-                // console.log(response.data);
-                await dispatch(loginUser({"email":email,"password":password})).unwrap();
-                
-            }
-            catch(error:any){
-                console.log(error.value)
-            }
-      // console.log("Signup:", { "name":username, email, password });
-      // Navigate to dashboard after successful signup
+      // Register the user
+      await axios.post(`${API_URL}/users/register/`,{"name":username,"email":email,"password":password},{withCredentials:true});
+      
+      // Login after successful registration
+      await dispatch(loginUser({"email":email,"password":password})).unwrap();
+      
+      // Navigate to dashboard only after successful signup and login
       navigate('/dashboard');
-    } catch (err: any) {  
-      console.error("Signup failed", err);
+    } catch (error: any) {  
+      console.error("Signup failed", error);
+      // Show error message to user
+      const errorMessage = error.response?.data?.message || 'Signup failed. Please try again.';
+      alert(errorMessage);
     } finally {
       setIsLoading(false);
     }
