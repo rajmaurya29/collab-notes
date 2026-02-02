@@ -79,7 +79,7 @@ def registerUser(request):
         return Response(message,status=HTTP_400_BAD_REQUEST)
 
 
-
+@permission_classes([IsAuthenticated])
 @api_view(['POST'])
 def logoutUser(request):
     response=Response({"message":"logout successfully"},status=HTTP_200_OK)
@@ -105,7 +105,7 @@ def logoutUser(request):
         )
     return response
 
-
+@permission_classes([IsAuthenticated])
 @api_view(['GET'])
 def fetchUser(request):
     userData=UserSerializer(request.user)
