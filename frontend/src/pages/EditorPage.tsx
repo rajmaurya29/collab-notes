@@ -7,10 +7,59 @@ import { useAppDispatch } from '../store/hooks';
 // import { updateNote } from '../store/slices/notesSlice';
 import ThemeToggle from '../components/ThemeToggle';
 import Loader from '../components/Loader';
-import { updateNote } from '../store/slices/notesSlice';
+import { updateNote, fetchIndividualNote } from '../store/slices/notesSlice';
 
 function EditorPage() {
+  const WS_BASE_URL = import.meta.env.VITE_WS_URL;
+
+  console.log("this is editor page");
   const { id } = useParams<{ id: string }>();
+  const timer=useRef<number|null>(null);
+  const socketRef=useRef<WebSocket|null>(null);
+  const userId=useSelector((state:RootState)=>state.auth.user?.id)
+  useEffect(()=>{
+    const socket= new WebSocket(`${WS_BASE_URL}/ws/notes/${id}/`);
+    socketRef.current=socket;
+    
+    socket.onopen=()=>{
+      // console.log(userId)
+      console.log(" WebSocket connected for note:", id);
+
+    }
+
+    socket.onmessage=(event:MessageEvent)=>{
+      const data=JSON.parse(event.data)
+
+      
+      if(data.senderId===userId){
+        return;
+      }
+
+      setBody(data.content);
+      if(bodyRef.current){
+        bodyRef.current.innerHTML=data.content;
+      }
+      console.log("Message received:", data.content);
+
+    }
+
+
+    socket.onerror=(error:Event)=>{
+      console.log("WebSocket error:", error);
+
+    }
+    socket.onclose=()=>{
+      console.log("WebSocket disconnected for note:", id);
+
+    }
+
+    return ()=>{
+      socket.close();
+    }
+  },[id])
+
+
+
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { notes, loading } = useSelector((state: RootState) => state.notes);
@@ -34,12 +83,27 @@ function EditorPage() {
       if (bodyRef.current) {
         bodyRef.current.innerHTML = note.content;
       }
-    } else if (id && !loading && notes.length > 0) {
-      // Note not found after loading is complete, redirect to dashboard
-      console.log('Note not found, redirecting to dashboard');
-      navigate('/dashboard');
+    } else if (id && !loading && noteId) {
+      // Note not found locally, try fetching from backend
+      console.log('Note not found locally, fetching from backend...');
+      dispatch(fetchIndividualNote({ noteId }))
+        .unwrap()
+        .catch((error) => {
+          console.error('Failed to fetch note:', error);
+          // If fetch fails, redirect to dashboard
+          navigate('/dashboard');
+        });
     }
-  }, [note, id, navigate, loading, notes.length]);
+  }, [note, id, navigate, loading, noteId, dispatch]);
+
+  useEffect(() => {
+  return () => {
+    if (timer.current) {
+      clearTimeout(timer.current);
+    }
+  };
+}, []);
+
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;
@@ -52,10 +116,36 @@ function EditorPage() {
   };
 
   const handleBodyInput = () => {
+    // console.log(userId)
+    if(!userId || !bodyRef.current) return;
+    const newBody = bodyRef.current.innerHTML;
     if (bodyRef.current) {
-      const newBody = bodyRef.current.innerHTML;
+      
       setBody(newBody);
+      
+      if(socketRef.current?.readyState===WebSocket.OPEN){
+        // console.log("send")
+        // console.log("WS readyState:", socketRef.current?.readyState);
+
+        socketRef.current.send(
+          JSON.stringify({
+            content:newBody,
+            senderId:userId,
+          })
+        )
+      }
     }
+    if(timer.current){
+      clearTimeout(timer.current)
+    }
+    if(id){
+      // console.log("saving")
+      timer.current=window.setTimeout(()=>{
+        // console.log("saving")
+      dispatch(updateNote({id,title,content:newBody,category}))
+    },800);
+    }
+    
   };
 
   const handleFormat = (command: string) => {
@@ -206,3 +296,5 @@ function EditorPage() {
 }
 
 export default EditorPage;
+
+

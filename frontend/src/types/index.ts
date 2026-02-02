@@ -12,15 +12,19 @@ export interface Note {
 }
 
 export interface User {
-  id: string;
+  id: number;
   username: string;
   email: string;
+  name: string;
+  access: string;
+  refresh: string;
 }
 
 // Redux state interfaces
 
 export interface AuthState {
-  isAuthenticated: boolean;
+  loading:boolean,
+  error:any,
   user: User | null;
 }
 

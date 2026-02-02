@@ -55,7 +55,7 @@ class MyTokenObtainPairView(TokenObtainPairView):
 def health(request):
     return Response({"status":"ok"})
 
- 
+
 @api_view(['POST'])
 def registerUser(request):
     data=request.data
@@ -104,3 +104,9 @@ def logoutUser(request):
             path='/'
         )
     return response
+
+
+@api_view(['GET'])
+def fetchUser(request):
+    userData=UserSerializer(request.user)
+    return Response(userData.data)

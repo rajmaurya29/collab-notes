@@ -42,6 +42,7 @@ else:
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -50,7 +51,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
-    # 'channels',
+    'channels',
     'notes.apps.NotesConfig',
     'users.apps.UsersConfig'
 ]
@@ -153,9 +154,9 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'backend.wsgi.application'
+# WSGI_APPLICATION = 'backend.wsgi.application'
 
-# ASGI_APPLICATION = 'backend.asgi.application'
+ASGI_APPLICATION = 'backend.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -225,6 +226,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #     }
 # }
 
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [os.environ.get("REDIS_URL")],
+            "capacity": 1500,
+            "expiry": 10,
+        },
+    },
+}
 
 if ENVIRONMENT == "local":
     CSRF_TRUSTED_ORIGINS = [
