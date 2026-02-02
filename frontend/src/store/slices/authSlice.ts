@@ -1,5 +1,6 @@
 import { createSlice,createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import type { AuthState } from '../../types';
 const API_URL = import.meta.env.VITE_API_URL as string;
 
 
@@ -35,7 +36,8 @@ export const logoutUser=createAsyncThunk(
 export const fetchUser=createAsyncThunk(
     "fetchUser",async (_,thunkAPI)=>{
         try{
-            const response= await axios.get(`${API_URL}/users/fetch/`
+            const response= await axios.get(`${API_URL}/users/fetch/`,
+                {withCredentials:true}
             )
             return response.data;
         }
@@ -46,14 +48,14 @@ export const fetchUser=createAsyncThunk(
 }
 )
 
-interface loginState{
-    userInfo:any,
-    loading:boolean,
-    error:any
-}
+// interface loginState{
+//     userInfo:any,
+//     loading:boolean,
+//     error:any
+// }
 
-const initialState:loginState={
-    userInfo:null,
+const initialState:AuthState={
+    user:null,
     loading:false,
     error:null
 };
@@ -71,7 +73,7 @@ const authSlice = createSlice({
         });
         builder.addCase(loginUser.fulfilled,(state,action)=>{
             state.loading=false,
-            state.userInfo=action.payload
+            state.user=action.payload
             // const item=action.payload
             // let itemList={email:item['email'],id:item['id'],isAdmin:item['isAdmin'],name:item['name'],username:item['username'],_id:item['_id']}
             // localStorage.setItem("userInfo",JSON.stringify(itemList))
@@ -82,11 +84,11 @@ const authSlice = createSlice({
             state.error=action.payload
         })
         builder.addCase(fetchUser.fulfilled,(state,actions)=>{
-            state.userInfo=actions.payload,
+            state.user=actions.payload,
             state.loading=false
         })
         builder.addCase(logoutUser.fulfilled,(state)=>{
-            state.userInfo=null,
+            state.user=null,
             
             state.loading=false,
             state.error=null

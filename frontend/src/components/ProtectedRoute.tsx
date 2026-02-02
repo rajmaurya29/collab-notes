@@ -1,14 +1,38 @@
 import { Navigate } from 'react-router-dom';
-import { useAppSelector } from '../store/hooks';
+import { useEffect, useState } from 'react';
+import { useAppSelector, useAppDispatch } from '../store/hooks';
+import { fetchUser } from '../store/slices/authSlice';
+import Loader from './Loader';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const isAuthenticated = useAppSelector((state) => state.auth);
+  const dispatch = useAppDispatch();
+  const { user, loading } = useAppSelector((state) => state.auth);
+  const [isChecking, setIsChecking] = useState(true);
 
-  if (!isAuthenticated) {
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (!user) {
+        try {
+          await dispatch(fetchUser()).unwrap();
+        } catch (error) {
+          console.log('Not authenticated');
+        }
+      }
+      setIsChecking(false);
+    };
+
+    checkAuth();
+  }, [dispatch, user]);
+
+  if (isChecking || loading) {
+    return <Loader fullScreen message="Checking authentication..." />;
+  }
+
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 

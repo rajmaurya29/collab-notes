@@ -40,7 +40,7 @@ def Individual_Note(request,id):
     elif request.method=='PUT':
         try:
             note=Note.objects.get(
-               owner=request.user,
+            #    owner=request.user,
                id=id)  
             note.title=request.data['title']
             note.content=request.data['content']
