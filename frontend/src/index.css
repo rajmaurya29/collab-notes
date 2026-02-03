@@ -888,6 +888,74 @@ textarea,
   flex-shrink: 0;
 }
 
+.share-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  background-color: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.share-btn:hover {
+  background-color: var(--bg-body);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.share-btn:active {
+  transform: scale(0.95);
+}
+
+.share-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.copy-notification {
+  position: absolute;
+  top: 3rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.5rem 0.75rem;
+  background-color: var(--text-main);
+  color: var(--bg-card);
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 6px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  animation: fadeInOutBottom 2s ease-in-out;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+@keyframes fadeInOutBottom {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-5px);
+  }
+  10% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  90% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(5px);
+  }
+}
+
 .back-btn {
   display: flex;
   align-items: center;
@@ -1493,6 +1561,21 @@ textarea,
 
   .editor-nav-right {
     gap: 0.5rem;
+  }
+
+  .share-btn {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .share-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .copy-notification {
+    font-size: 0.6875rem;
+    padding: 0.375rem 0.625rem;
   }
 
   .editor-owner {

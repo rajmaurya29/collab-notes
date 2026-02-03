@@ -72,6 +72,8 @@ function EditorPage() {
   const [body, setBody] = useState('');
   const [category, setCategory] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [showCopyNotification, setShowCopyNotification] = useState(false);
+  const [isShareCopied, setIsShareCopied] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
 
   // Load note data when component mounts or note changes
@@ -171,6 +173,24 @@ function EditorPage() {
     navigate('/dashboard');
   };
 
+  const handleShare = async () => {
+    if (!id) return;
+    
+    const shareUrl = `${window.location.origin}/editor/${id}`;
+    
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setIsShareCopied(true);
+      setShowCopyNotification(true);
+      setTimeout(() => {
+        setIsShareCopied(false);
+      }, 1000);
+      setTimeout(() => setShowCopyNotification(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy URL:', err);
+    }
+  };
+
   if (loading) {
     return <Loader fullScreen message="Loading note..." />;
   }
@@ -198,6 +218,24 @@ function EditorPage() {
         </div>
 
         <div className="editor-nav-right">
+          <button 
+            className="share-btn" 
+            onClick={handleShare}
+            aria-label="Share note"
+            title="Copy share link"
+          >
+            {isShareCopied ? (
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fillRule="evenodd" clipRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fill="currentColor"/>
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 8a3 3 0 100-6 3 3 0 000 6zM15 18a3 3 0 100-6 3 3 0 000 6zM5 13a3 3 0 100-6 3 3 0 000 6z" fill="currentColor"/>
+                <path d="M7.59 11.51l4.82 2.98M12.41 6.51l-4.82 2.98" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            )}
+            {showCopyNotification && <span className="copy-notification">Copied!</span>}
+          </button>
           <div className="editor-owner">
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path fillRule="evenodd" clipRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" fill="currentColor"/>
