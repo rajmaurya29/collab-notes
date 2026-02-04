@@ -5,32 +5,36 @@ import DashboardPage from './pages/DashboardPage';
 import EditorPage from './pages/EditorPage';
 import LogoutPage from './pages/LogoutPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import Toaster from './components/Toaster';
 import './App.css';
 
 function App() {
   return (
-    <Routes>
-      <Route path="/signup" element={<SignupPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route 
-        path="/dashboard" 
-        element={
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/editor/:id" 
-        element={
-          <ProtectedRoute>
-            <EditorPage />
-          </ProtectedRoute>
-        } 
-      />
-      <Route path="/logout" element={<LogoutPage />} />
-      <Route path="/" element={<Navigate to="/login" replace />} />
-    </Routes>
+    <>
+      <Toaster />
+      <Routes>
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/editor/:id" 
+          element={
+            <ProtectedRoute>
+              <EditorPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route path="/logout" element={<LogoutPage />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </>
   );
 }
 

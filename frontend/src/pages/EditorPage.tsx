@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { toast } from 'react-toastify';
 import type { RootState } from '../types';
 import { useAppDispatch } from '../store/hooks';
 
@@ -17,6 +18,7 @@ function EditorPage() {
   const timer=useRef<number|null>(null);
   const socketRef=useRef<WebSocket|null>(null);
   const userId=useSelector((state:RootState)=>state.auth.user?.id)
+  const username=useSelector((state:RootState)=>state.auth.user?.name)
   useEffect(()=>{
     const socket= new WebSocket(`${WS_BASE_URL}/ws/notes/${id}/`);
     socketRef.current=socket;
@@ -24,14 +26,31 @@ function EditorPage() {
     socket.onopen=()=>{
       // console.log(userId)
       console.log(" WebSocket connected for note:", id);
-
+      socket.send(
+          JSON.stringify({
+            type:"join",
+            username:username,
+            senderId:userId,
+          })
+        )
     }
-
+      
     socket.onmessage=(event:MessageEvent)=>{
       const data=JSON.parse(event.data)
 
       
       if(data.senderId===userId){
+        return;
+      }
+
+      if(data.type==="join"){
+        console.log(data.username);
+        console.log(data.senderId);
+        toast.success(`${data.username} joined`, {
+          autoClose: 3000,
+          pauseOnHover: false,
+          pauseOnFocusLoss: false,
+        });
         return;
       }
 
@@ -63,15 +82,21 @@ function EditorPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { notes, loading } = useSelector((state: RootState) => state.notes);
+  const currentUser = useSelector((state: RootState) => state.auth.user);
 
   // Convert id to number for comparison
   const noteId = id ? Number(id) : null;
   const note = notes.find(n => n.id === noteId);
+  
+  // Check if current user is the owner of the note
+  const isOwner = currentUser && note && currentUser.id === note.owner;
 
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [category, setCategory] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [showCopyNotification, setShowCopyNotification] = useState(false);
+  const [isShareCopied, setIsShareCopied] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
 
   // Load note data when component mounts or note changes
@@ -171,6 +196,24 @@ function EditorPage() {
     navigate('/dashboard');
   };
 
+  const handleShare = async () => {
+    if (!id) return;
+    
+    const shareUrl = `${window.location.origin}/editor/${id}`;
+    
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setIsShareCopied(true);
+      setShowCopyNotification(true);
+      setTimeout(() => {
+        setIsShareCopied(false);
+      }, 1000);
+      setTimeout(() => setShowCopyNotification(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy URL:', err);
+    }
+  };
+
   if (loading) {
     return <Loader fullScreen message="Loading note..." />;
   }
@@ -194,10 +237,33 @@ function EditorPage() {
           <svg className="save-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fillRule="evenodd" clipRule="evenodd" d="M13.854 3.646a.5.5 0 010 .708l-7 7a.5.5 0 01-.708 0l-3.5-3.5a.5.5 0 11.708-.708L6.5 10.293l6.646-6.647a.5.5 0 01.708 0z" fill="currentColor"/>
           </svg>
-          <span>All changes saved</span>
+          <span>
+            {isOwner 
+              ? 'All changes saved' 
+              : `Real-time connection with ${note.ownerName || 'owner'}'s note`
+            }
+          </span>
         </div>
 
         <div className="editor-nav-right">
+          <button 
+            className="share-btn" 
+            onClick={handleShare}
+            aria-label="Share note"
+            title="Copy share link"
+          >
+            {isShareCopied ? (
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fillRule="evenodd" clipRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fill="currentColor"/>
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 8a3 3 0 100-6 3 3 0 000 6zM15 18a3 3 0 100-6 3 3 0 000 6zM5 13a3 3 0 100-6 3 3 0 000 6z" fill="currentColor"/>
+                <path d="M7.59 11.51l4.82 2.98M12.41 6.51l-4.82 2.98" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            )}
+            {showCopyNotification && <span className="copy-notification">Copied!</span>}
+          </button>
           <div className="editor-owner">
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path fillRule="evenodd" clipRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" fill="currentColor"/>
