@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { toast } from 'react-toastify';
 import type { RootState } from '../types';
 import { useAppDispatch } from '../store/hooks';
 
@@ -18,7 +17,6 @@ function EditorPage() {
   const timer=useRef<number|null>(null);
   const socketRef=useRef<WebSocket|null>(null);
   const userId=useSelector((state:RootState)=>state.auth.user?.id)
-  const username=useSelector((state:RootState)=>state.auth.user?.name)
   useEffect(()=>{
     const socket= new WebSocket(`${WS_BASE_URL}/ws/notes/${id}/`);
     socketRef.current=socket;
@@ -26,31 +24,14 @@ function EditorPage() {
     socket.onopen=()=>{
       // console.log(userId)
       console.log(" WebSocket connected for note:", id);
-      socket.send(
-          JSON.stringify({
-            type:"join",
-            username:username,
-            senderId:userId,
-          })
-        )
+
     }
-      
+
     socket.onmessage=(event:MessageEvent)=>{
       const data=JSON.parse(event.data)
 
       
       if(data.senderId===userId){
-        return;
-      }
-
-      if(data.type==="join"){
-        console.log(data.username);
-        console.log(data.senderId);
-        toast.success(`${data.username} joined`, {
-          autoClose: 3000,
-          pauseOnHover: false,
-          pauseOnFocusLoss: false,
-        });
         return;
       }
 
