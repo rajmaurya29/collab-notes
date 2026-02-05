@@ -18,8 +18,22 @@ class NoteConsumer(AsyncWebsocketConsumer):
         
         data = json.loads(text_data)
         content = data.get('content')
+        
         sender_id=data.get('senderId')
         # print(sender_id)
+        if data.get("type")=='join':
+            username=data.get('username')
+            print("joined")
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'user_joined',
+                    'username': username,
+                    'senderId':sender_id
+                }
+            )
+            return
+
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -32,6 +46,13 @@ class NoteConsumer(AsyncWebsocketConsumer):
     async def note_update(self, event):
         await self.send(text_data=json.dumps({
             'content': event['content'],
+            'senderId':event['senderId'],
+        }))
+
+    async def user_joined(self, event):
+        await self.send(text_data=json.dumps({
+            'type':"join",
+            'username': event['username'],
             'senderId':event['senderId'],
         }))
 
