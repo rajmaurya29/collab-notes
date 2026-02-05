@@ -177,6 +177,11 @@ DATABASES = {
     )
 }
 
+# Add database connection timeout
+DATABASES['default']['OPTIONS'] = {
+    'connect_timeout': 10,
+}
+
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
@@ -234,7 +239,20 @@ CHANNEL_LAYERS = {
             "hosts": [os.environ.get("REDIS_URL")],
             "capacity": 1500,
             "expiry": 10,
+            "channel_capacity": {
+                "http.request": 200,
+                "http.response!*": 10,
+            },
         },
+        "OPTIONS": {
+            "connection_pool_kwargs": {
+                "max_connections": 20,
+                "retry_on_timeout": True,
+                "socket_keepalive": True,
+                "socket_connect_timeout": 5,
+                "socket_timeout": 5,
+            }
+        }
     },
 }
 
