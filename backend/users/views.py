@@ -108,5 +108,7 @@ def logoutUser(request):
 @permission_classes([IsAuthenticated])
 @api_view(['GET'])
 def fetchUser(request):
+    if not request.user.is_authenticated:
+        return Response({"message":"not authenticated"},status=400)
     userData=UserSerializer(request.user)
     return Response(userData.data)
