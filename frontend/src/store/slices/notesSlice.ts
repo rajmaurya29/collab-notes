@@ -76,20 +76,7 @@ export const updateNote=createAsyncThunk(
 )
 
 
-export const fetchIndividualNote=createAsyncThunk(
-    "fetchIndividualNote",async ({noteId}:{noteId:number},thunkAPI)=>{
-        try{
-            const response= await axios.get(`${API_URL}/notes/${noteId}/`,
-              {withCredentials:true}
-            )
-            return response.data;
-        }
-        catch(error:any){
-            return thunkAPI.rejectWithValue(error.message);
-        }
-    
-}
-)
+
 
 const initialState: NotesState = {
   notes: [],
@@ -118,25 +105,6 @@ const notesSlice = createSlice({
       state.error=null
     })
     builder.addCase(fetchNotes.rejected,(state,action)=>{
-      state.loading=false,
-      state.error=action.payload
-    })
-    builder.addCase(fetchIndividualNote.fulfilled,(state,action)=>{
-      state.loading=false
-      // Add or update the note in the notes array
-      const existingNoteIndex = state.notes.findIndex(note => note.id === action.payload.id)
-      if (existingNoteIndex !== -1) {
-        state.notes[existingNoteIndex] = action.payload
-      } else {
-        state.notes.push(action.payload)
-      }
-      state.error=null
-    })
-    builder.addCase(fetchIndividualNote.pending,(state)=>{
-      state.loading=true,
-      state.error=null
-    })
-    builder.addCase(fetchIndividualNote.rejected,(state,action)=>{
       state.loading=false,
       state.error=action.payload
     })

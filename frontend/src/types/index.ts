@@ -3,7 +3,7 @@
 export interface Note {
   id: number;
   title: string;
-  content: string;
+  content?: string; // Optional - only loaded when viewing individual note
   category: string;
   created_at: string;
   updated_at: string;

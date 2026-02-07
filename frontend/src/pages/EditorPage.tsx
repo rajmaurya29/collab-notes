@@ -8,7 +8,8 @@ import { useAppDispatch } from '../store/hooks';
 // import { updateNote } from '../store/slices/notesSlice';
 import ThemeToggle from '../components/ThemeToggle';
 import Loader from '../components/Loader';
-import { updateNote, fetchIndividualNote } from '../store/slices/notesSlice';
+import { updateNote } from '../store/slices/notesSlice';
+import {  fetchIndividualNote } from '../store/slices/individualNoteSlice';
 
 function EditorPage() {
   const WS_BASE_URL = import.meta.env.VITE_WS_URL;
@@ -81,45 +82,51 @@ function EditorPage() {
 
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { notes, loading } = useSelector((state: RootState) => state.notes);
   const currentUser = useSelector((state: RootState) => state.auth.user);
 
   // Convert id to number for comparison
   const noteId = id ? Number(id) : null;
-  const note = notes.find(n => n.id === noteId);
   
-  // Check if current user is the owner of the note
-  const isOwner = currentUser && note && currentUser.id === note.owner;
-
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [category, setCategory] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
   const [showCopyNotification, setShowCopyNotification] = useState(false);
   const [isShareCopied, setIsShareCopied] = useState(false);
+  const [fetchedNote, setFetchedNote] = useState<any>(null);
+  const [isLoadingNote, setIsLoadingNote] = useState(true);
   const bodyRef = useRef<HTMLDivElement>(null);
+  
+  // Check if current user is the owner of the note
+  const isOwner = currentUser && fetchedNote && currentUser.id === fetchedNote.owner;
 
   // Load note data when component mounts or note changes
   useEffect(() => {
-    if (note) {
-      setTitle(note.title);
-      setBody(note.content);
-      setCategory(note.category || '');
-      if (bodyRef.current) {
-        bodyRef.current.innerHTML = note.content;
-      }
-    } else if (id && !loading && noteId) {
-      // Note not found locally, try fetching from backend
-      console.log('Note not found locally, fetching from backend...');
+    if (noteId) {
+      setIsLoadingNote(true);
+      // Always fetch individual note to get full content
       dispatch(fetchIndividualNote({ noteId }))
         .unwrap()
+        .then((fetchedNote) => {
+          setFetchedNote(fetchedNote);
+          setTitle(fetchedNote.title);
+          setBody(fetchedNote.content);
+          setCategory(fetchedNote.category || '');
+          setIsLoadingNote(false);
+        })
         .catch((error) => {
           console.error('Failed to fetch note:', error);
-          // If fetch fails, redirect to dashboard
+          setIsLoadingNote(false);
           navigate('/dashboard');
         });
     }
-  }, [note, id, navigate, loading, noteId, dispatch]);
+  }, [noteId, dispatch, navigate]);
+
+  // Set body content after component renders and fetchedNote is available
+  useEffect(() => {
+    if (fetchedNote && bodyRef.current && !isLoadingNote) {
+      bodyRef.current.innerHTML = fetchedNote.content;
+    }
+  }, [fetchedNote, isLoadingNote]);
 
   useEffect(() => {
   return () => {
@@ -180,19 +187,7 @@ function EditorPage() {
     }
   };
 
-  const handleBack = async () => {
-    // Actually save to backend when back button is clicked
-    if (id) {
-      try {
-        setIsSaving(true);
-        await dispatch(updateNote({ id, title, content: body, category })).unwrap();
-      } catch (err) {
-        console.error("Failed to save note", err);
-      } finally {
-        setIsSaving(false);
-      }
-    }
-    
+  const handleBack = () => {
     navigate('/dashboard');
   };
 
@@ -214,17 +209,12 @@ function EditorPage() {
     }
   };
 
-  if (loading) {
+  if (isLoadingNote || !fetchedNote) {
     return <Loader fullScreen message="Loading note..." />;
-  }
-
-  if (!note) {
-    return <Loader fullScreen message="Note not found..." />;
   }
 
   return (
     <div className="editor-container">
-      {isSaving && <Loader fullScreen message="Saving note..." />}
       <nav className="editor-nav">
         <button className="back-btn" onClick={handleBack} aria-label="Back to dashboard">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -240,7 +230,7 @@ function EditorPage() {
           <span>
             {isOwner 
               ? 'All changes saved' 
-              : `Real-time connection with ${note.ownerName || 'owner'}'s note`
+              : `Real-time connection with ${fetchedNote.ownerName || 'owner'}'s note`
             }
           </span>
         </div>
@@ -268,7 +258,7 @@ function EditorPage() {
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path fillRule="evenodd" clipRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" fill="currentColor"/>
             </svg>
-            <span>{note.ownerName|| 'Unknown'}</span>
+            <span>{fetchedNote.ownerName || 'Unknown'}</span>
           </div>
           <ThemeToggle />
         </div>

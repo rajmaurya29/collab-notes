@@ -4,14 +4,14 @@ from django.contrib.auth.models import User
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated,IsAdminUser
 from notes.models import Note
-from notes.serializers import NoteSerializer
+from notes.serializers import NoteSerializer,NoteDetailSerializer
 from rest_framework.status import *
 
 @api_view(['POST','GET'])
 @permission_classes([IsAuthenticated])
 def All_New_Note(request):
     if request.method=='GET':
-        notes=Note.objects.filter(owner=request.user).order_by('-created_at')
+        notes=Note.objects.filter(owner=request.user).order_by('-updated_at')
         serializer=NoteSerializer(notes,many=True)
         return Response(serializer.data)
 
@@ -21,7 +21,7 @@ def All_New_Note(request):
             title=request.data['title'],
             content=request.data['content']
         )
-        serializer=NoteSerializer(note,many=False)
+        serializer=NoteDetailSerializer(note,many=False)
         return Response(serializer.data)
     
 
@@ -32,7 +32,7 @@ def Individual_Note(request,id):
         try:
             note=Note.objects.get(                
                 id=id)
-            serializer=NoteSerializer(note,many=False)
+            serializer=NoteDetailSerializer(note,many=False)
             return Response(serializer.data)
         except:
             
@@ -45,7 +45,7 @@ def Individual_Note(request,id):
             note.title=request.data['title']
             note.content=request.data['content']
             note.category=request.data['category']
-            serializer=NoteSerializer(note,many=False)
+            serializer=NoteDetailSerializer(note,many=False)
             note.save()
             return Response(serializer.data)
         except:

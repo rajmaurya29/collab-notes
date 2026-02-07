@@ -81,7 +81,9 @@ const handleNewNote = async () => {
     }
   };
 
-  const getPreview = (content: string, maxLength: number = 100) => {
+  const getPreview = (content: string | undefined, maxLength: number = 100) => {
+    // If content is not available (lazy loading), show placeholder
+    if (!content) return 'Click to view content...';
     if (content.length <= maxLength) return content;
     return content.substring(0, maxLength) + '...';
   };
