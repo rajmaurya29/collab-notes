@@ -55,7 +55,6 @@ function EditorPage() {
         return;
       }
 
-      setBody(data.content);
       if(bodyRef.current){
         bodyRef.current.innerHTML=data.content;
       }
@@ -88,7 +87,6 @@ function EditorPage() {
   const noteId = id ? Number(id) : null;
   
   const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
   const [category, setCategory] = useState('');
   const [showCopyNotification, setShowCopyNotification] = useState(false);
   const [isShareCopied, setIsShareCopied] = useState(false);
@@ -109,7 +107,6 @@ function EditorPage() {
         .then((fetchedNote) => {
           setFetchedNote(fetchedNote);
           setTitle(fetchedNote.title);
-          setBody(fetchedNote.content);
           setCategory(fetchedNote.category || '');
           setIsLoadingNote(false);
         })
@@ -153,7 +150,6 @@ function EditorPage() {
     const newBody = bodyRef.current.innerHTML;
     if (bodyRef.current) {
       
-      setBody(newBody);
       
       if(socketRef.current?.readyState===WebSocket.OPEN){
         // console.log("send")
