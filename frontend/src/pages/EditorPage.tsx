@@ -137,11 +137,33 @@ function EditorPage() {
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;
     setTitle(newTitle);
+    
+    // Auto-save title
+    if(timer.current){
+      clearTimeout(timer.current)
+    }
+    if(id && bodyRef.current){
+      timer.current=window.setTimeout(()=>{
+        const currentContent = bodyRef.current?.innerHTML || '';
+        dispatch(updateNote({id, title: newTitle, content: currentContent, category}))
+      }, 800);
+    }
   };
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newCategory = e.target.value;
     setCategory(newCategory);
+    
+    // Auto-save category
+    if(timer.current){
+      clearTimeout(timer.current)
+    }
+    if(id && bodyRef.current){
+      timer.current=window.setTimeout(()=>{
+        const currentContent = bodyRef.current?.innerHTML || '';
+        dispatch(updateNote({id, title, content: currentContent, category: newCategory}))
+      }, 800);
+    }
   };
 
   const handleBodyInput = () => {
