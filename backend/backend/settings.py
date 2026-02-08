@@ -35,7 +35,7 @@ DEBUG = ENVIRONMENT == "local"
 if ENVIRONMENT == "local":
     ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 else:
-    ALLOWED_HOSTS = ["collab-notes-5j4s.onrender.com","collab-notes-5gq7.onrender.com","https://collab-notes-1zqd.onrender.com"]
+    ALLOWED_HOSTS = ["collab-notes-5j4s.onrender.com","collab-notes-5gq7.onrender.com","collab-notes-1zqd.onrender.com"]
 
 
 
