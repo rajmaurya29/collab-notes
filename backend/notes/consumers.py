@@ -2,7 +2,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 
 class NoteConsumer(AsyncWebsocketConsumer):
-    current_user=[]
+    current_user={}
     async def connect(self):
         self.note_id = self.scope['url_route']['kwargs']['note_id']
         self.room_group_name = f'note_{self.note_id}'
@@ -23,8 +23,12 @@ class NoteConsumer(AsyncWebsocketConsumer):
         # print(sender_id)
         if data.get("type")=='join':
             username=data.get('username')
-            self.current_user.append(username)
-            print("joined")
+            if sender_id not in self.current_user:
+                self.current_user[str(sender_id)]=username
+            # self.current_user.append(username)
+            # print("joined")
+            # current_username=list(self.current_user.values())
+
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
@@ -37,10 +41,16 @@ class NoteConsumer(AsyncWebsocketConsumer):
             return
 
         if data.get("type")=="leaved":
-            print("leaved")
+            # print("leaved")
+            sender_id=data.get("senderId")
             username=data.get("username")
-            self.current_user.remove(username)
-
+            if str(sender_id) in self.current_user:
+                # print("removed")
+                self.current_user.pop(str(sender_id))
+                # print(self.current_user)
+            # self.current_user.remove(username)
+            # current_username=list(self.current_user.values())
+            
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {

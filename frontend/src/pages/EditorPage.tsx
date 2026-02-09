@@ -27,6 +27,8 @@ function EditorPage() {
     socket.onopen=()=>{
       console.log(" WebSocket connected for note:", id);
       setIsWsConnected(true);
+      // Don't add current user here - wait for the join message from backend
+      // This ensures all users are added through the same mechanism
       socket.send(
           JSON.stringify({
             type:"join",
@@ -38,16 +40,23 @@ function EditorPage() {
       
     socket.onmessage=(event:MessageEvent)=>{
       const data=JSON.parse(event.data)
+      console.log("WebSocket message received:", data);
 
       
-      if(data.senderId===userId){
-        return;
-      }
+      
 
       if(data.type==="join"){
         console.log("joined "+data.username+" "+data.senderId+" "+data.current_user);
-        // console.log(data.username);
-        // console.log(data.senderId);
+        
+        // Update the connected users list
+        // Strategy: Keep track of users we know about (with IDs), and add the new user
+        console.log(data.current_user);
+        setConnectedUsers(data.current_user);
+        
+        // Don't show toast for your own join
+        if(data.senderId===userId){
+          return;
+        }
         toast.success(`${data.username} joined`, {
           autoClose: 3000,
           pauseOnHover: false,
@@ -57,8 +66,11 @@ function EditorPage() {
       }
       if(data.type==="leaved"){
         console.log("leaved "+data.username+" "+data.senderId+" "+data.current_user);
-        // console.log(data.username);
-        // console.log(data.senderId);
+        // Remove user from connected users list
+        setConnectedUsers(data.current_user);
+        if(data.senderId===userId){
+        return;
+      }
         toast.error(`${data.username} leaved`, {
           autoClose: 3000,
           pauseOnHover: false,
@@ -66,7 +78,9 @@ function EditorPage() {
         });
         return;
       }
-
+      if(data.senderId===userId){
+        return;
+      }
       if(bodyRef.current){
         bodyRef.current.innerHTML=data.content;
       }
@@ -115,7 +129,27 @@ function EditorPage() {
   const [fetchedNote, setFetchedNote] = useState<any>(null);
   const [isLoadingNote, setIsLoadingNote] = useState(true);
   const [isWsConnected, setIsWsConnected] = useState(false);
+  const [connectedUsers, setConnectedUsers] = useState<Record<number, string>>({});
+  const [showUsersDropdown, setShowUsersDropdown] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowUsersDropdown(false);
+      }
+    };
+
+    if (showUsersDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUsersDropdown]);
   
   // Check if current user is the owner of the note
   const isOwner = currentUser && fetchedNote && currentUser.id === fetchedNote.owner;
@@ -321,11 +355,44 @@ function EditorPage() {
             )}
             {showCopyNotification && <span className="copy-notification">Copied!</span>}
           </button>
-          <div className="editor-owner">
-            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path fillRule="evenodd" clipRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" fill="currentColor"/>
-            </svg>
-            <span>{fetchedNote.ownerName || 'Unknown'}</span>
+          <div className="editor-users-dropdown" ref={dropdownRef}>
+            <button 
+              className="users-dropdown-trigger"
+              onClick={() => setShowUsersDropdown(!showUsersDropdown)}
+              aria-label="Show connected users"
+            >
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fillRule="evenodd" clipRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" fill="currentColor"/>
+              </svg>
+              <span>{Object.keys(connectedUsers).length}</span>
+              <svg className="dropdown-arrow" width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 7.5l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            
+            {showUsersDropdown && (
+              <div className="users-dropdown-menu">
+                <div className="users-dropdown-header">Connected Users</div>
+                {Object.entries(connectedUsers).map(([userIdStr, userName]) => {
+                  const userIdNum = Number(userIdStr);
+                  const isOwner = fetchedNote && userIdNum === fetchedNote.owner;
+                  return (
+                    <div key={userIdStr} className="user-dropdown-item">
+                      <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fillRule="evenodd" clipRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" fill="currentColor"/>
+                      </svg>
+                      <span>{userName}</span>
+                      {isOwner && (
+                        <svg className="owner-badge" width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <title>Owner</title>
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" fill="currentColor"/>
+                        </svg>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
           <ThemeToggle />
         </div>
