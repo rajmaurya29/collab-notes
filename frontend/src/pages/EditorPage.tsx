@@ -25,8 +25,8 @@ function EditorPage() {
     socketRef.current=socket;
     
     socket.onopen=()=>{
-      // console.log(userId)
       console.log(" WebSocket connected for note:", id);
+      setIsWsConnected(true);
       socket.send(
           JSON.stringify({
             type:"join",
@@ -45,9 +45,21 @@ function EditorPage() {
       }
 
       if(data.type==="join"){
-        console.log(data.username);
-        console.log(data.senderId);
+        console.log("joined "+data.username+" "+data.senderId+" "+data.current_user);
+        // console.log(data.username);
+        // console.log(data.senderId);
         toast.success(`${data.username} joined`, {
+          autoClose: 3000,
+          pauseOnHover: false,
+          pauseOnFocusLoss: false,
+        });
+        return;
+      }
+      if(data.type==="leaved"){
+        console.log("leaved "+data.username+" "+data.senderId+" "+data.current_user);
+        // console.log(data.username);
+        // console.log(data.senderId);
+        toast.error(`${data.username} leaved`, {
           autoClose: 3000,
           pauseOnHover: false,
           pauseOnFocusLoss: false,
@@ -65,14 +77,24 @@ function EditorPage() {
 
     socket.onerror=(error:Event)=>{
       console.log("WebSocket error:", error);
-
+      setIsWsConnected(false);
     }
     socket.onclose=()=>{
       console.log("WebSocket disconnected for note:", id);
-
+      setIsWsConnected(false);
     }
 
     return ()=>{
+       if (socket.readyState === WebSocket.OPEN){
+        socket.send(
+          JSON.stringify({
+            type:"leaved",
+            username:username,
+            senderId:userId,
+          })
+        )
+       }
+      
       socket.close();
     }
   },[id])
@@ -92,6 +114,7 @@ function EditorPage() {
   const [isShareCopied, setIsShareCopied] = useState(false);
   const [fetchedNote, setFetchedNote] = useState<any>(null);
   const [isLoadingNote, setIsLoadingNote] = useState(true);
+  const [isWsConnected, setIsWsConnected] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
   
   // Check if current user is the owner of the note
@@ -242,15 +265,41 @@ function EditorPage() {
         </button>
 
         <div className="save-status">
-          <svg className="save-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path fillRule="evenodd" clipRule="evenodd" d="M13.854 3.646a.5.5 0 010 .708l-7 7a.5.5 0 01-.708 0l-3.5-3.5a.5.5 0 11.708-.708L6.5 10.293l6.646-6.647a.5.5 0 01.708 0z" fill="currentColor"/>
-          </svg>
-          <span>
-            {isOwner 
-              ? 'All changes saved' 
-              : `Real-time connection with ${fetchedNote.ownerName || 'owner'}'s note`
-            }
-          </span>
+          {isOwner ? (
+            // Owner's note - show "All changes saved" or connection status
+            isWsConnected ? (
+              <>
+                <svg className="connection-dot connected" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="8" cy="8" r="4" fill="currentColor"/>
+                </svg>
+                <span>Connected</span>
+              </>
+            ) : (
+              <>
+                <svg className="save-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path fillRule="evenodd" clipRule="evenodd" d="M13.854 3.646a.5.5 0 010 .708l-7 7a.5.5 0 01-.708 0l-3.5-3.5a.5.5 0 11.708-.708L6.5 10.293l6.646-6.647a.5.5 0 01.708 0z" fill="currentColor"/>
+                </svg>
+                <span>All changes saved</span>
+              </>
+            )
+          ) : (
+            // Not owner - show connection status
+            isWsConnected ? (
+              <>
+                <svg className="connection-dot connected" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="8" cy="8" r="4" fill="currentColor"/>
+                </svg>
+                <span>Connected</span>
+              </>
+            ) : (
+              <>
+                <svg className="connection-dot disconnected" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="8" cy="8" r="4" fill="currentColor"/>
+                </svg>
+                <span>Disconnected</span>
+              </>
+            )
+          )}
         </div>
 
         <div className="editor-nav-right">
