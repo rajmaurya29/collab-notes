@@ -64,14 +64,14 @@ function EditorPage() {
         });
         return;
       }
-      if(data.type==="leaved"){
-        console.log("leaved "+data.username+" "+data.senderId+" "+data.current_user);
+      if(data.type==="left"){
+        console.log("left "+data.username+" "+data.senderId+" "+data.current_user);
         // Remove user from connected users list
         setConnectedUsers(data.current_user);
         if(data.senderId===userId){
         return;
       }
-        toast.error(`${data.username} leaved`, {
+        toast.error(`${data.username} left`, {
           autoClose: 3000,
           pauseOnHover: false,
           pauseOnFocusLoss: false,
@@ -102,7 +102,7 @@ function EditorPage() {
        if (socket.readyState === WebSocket.OPEN){
         socket.send(
           JSON.stringify({
-            type:"leaved",
+            type:"left",
             username:username,
             senderId:userId,
           })

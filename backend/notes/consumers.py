@@ -40,8 +40,8 @@ class NoteConsumer(AsyncWebsocketConsumer):
             )
             return
 
-        if data.get("type")=="leaved":
-            # print("leaved")
+        if data.get("type")=="left":
+            # print("left")
             sender_id=data.get("senderId")
             username=data.get("username")
             if str(sender_id) in self.current_user:
@@ -54,7 +54,7 @@ class NoteConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
-                    'type': 'user_leaved',
+                    'type': 'user_left',
                     'username': username,
                     'senderId':sender_id,
                     'current_user':self.current_user
@@ -92,9 +92,9 @@ class NoteConsumer(AsyncWebsocketConsumer):
         )
         
     
-    async def user_leaved(self, event):
+    async def user_left(self, event):
         await self.send(text_data=json.dumps({
-            'type':"leaved",
+            'type':"left",
             'username': event['username'],
             'senderId':event['senderId'],
             'current_user':event['current_user']
