@@ -168,7 +168,10 @@ def forgot_password(request):
             to=[user.email],
         )
         email_message.attach_alternative(html_content, "text/html")
-        email_message.send()
+        try:
+            email_message.send()
+        except Exception as e:
+            print("Email error:", e)
     return Response({"message":"If user exit, email sent"},status=HTTP_200_OK)
     
 @api_view(['POST'])
