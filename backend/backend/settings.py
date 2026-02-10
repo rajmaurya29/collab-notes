@@ -276,7 +276,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = "heyho5278@gmail.com"
 EMAIL_HOST_PASSWORD = "rpaszsfaymbumlfj"
 
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+DEFAULT_FROM_EMAIL = "Collab Notes <heyho5278@gmail.com>"
 
 # if ENVIRONMENT == "production":
 #     STATIC_ROOT = BASE_DIR / "staticfiles"

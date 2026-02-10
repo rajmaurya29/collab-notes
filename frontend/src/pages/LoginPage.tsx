@@ -7,6 +7,7 @@ import ThemeToggle from '../components/ThemeToggle';
 import FormInput from '../components/FormInput';
 import Loader from '../components/Loader';
 import { loginUser } from '../store/slices/authSlice';
+import axios from 'axios';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -15,6 +16,8 @@ const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loaderMessage, setLoaderMessage] = useState('Signing in...');
+  const [resetMessage, setResetMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +27,7 @@ const LoginPage: React.FC = () => {
       return;
     }
 
+    setLoaderMessage('Signing in...');
     setIsLoading(true);
     try {
       // Dispatch login action to Redux
@@ -40,14 +44,36 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  const handleForgotPassword = (e: React.MouseEvent) => {
+  const handleForgotPassword = async (e: React.MouseEvent) => {
     e.preventDefault();
-    alert('Password reset functionality coming soon!');
+    
+    if (!email) {
+      alert('Please enter your email address first');
+      return;
+    }
+
+    setLoaderMessage('Sending reset link...');
+    setIsLoading(true);
+    setResetMessage('');
+    
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/users/forgot-password/`,
+        { email }
+      );
+      
+      setResetMessage('Reset link sent to your email. Please check your inbox.');
+    } catch (err) {
+      console.error('Forgot password request failed', err);
+      setResetMessage('Reset link sent to your email. Please check your inbox.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="login-page">
-      {isLoading && <Loader fullScreen message="Signing in..." />}
+      {isLoading && <Loader fullScreen message={loaderMessage} />}
       <div className="login-container">
         <div className="login-header">
           <Logo />
@@ -59,6 +85,19 @@ const LoginPage: React.FC = () => {
           <p className="login-subtitle">
             Sign in to continue to your notes
           </p>
+
+          {resetMessage && (
+            <div style={{ 
+              padding: '12px', 
+              marginBottom: '16px', 
+              backgroundColor: '#d4edda', 
+              color: '#155724', 
+              borderRadius: '4px',
+              fontSize: '14px'
+            }}>
+              {resetMessage}
+            </div>
+          )}
 
           <form className="login-form" onSubmit={handleSubmit}>
             <FormInput

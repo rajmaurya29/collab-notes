@@ -162,7 +162,7 @@ def forgot_password(request):
         )
         text_content = strip_tags(html_content)
         email_message=EmailMultiAlternatives(
-            subject="Reset password link",
+            subject="Collab Notes password reset request",
             body=text_content,
             from_email=None,
             to=[user.email],
