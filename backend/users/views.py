@@ -141,52 +141,34 @@ def fetchUser(request):
 token_generator=PasswordResetTokenGenerator()
 @api_view(['POST'])
 def forgot_password(request):
-    print("FORGOT PASSWORD HIT")
     data=request.data
     email=data.get("email")
-    print("EMAIL:", email)
 
     if not email:
-        print("NO EMAIL PROVIDED")
         return Response({"message":"If user exit, email sent"})
     
     user=User.objects.filter(email=email).first()
-    print("USER FOUND:", bool(user))
 
     if user:
-        try:
-            uid=urlsafe_base64_encode(force_bytes(user.pk))
-            token=token_generator.make_token(user)
-            print("UID:", uid)
-            print("TOKEN GENERATED")
-
-            print("FRONTEND_URL:", settings.FRONTEND_URL)
-            # print("uid "+uid)
-            reset_link=(
-                f"{settings.FRONTEND_URL}reset-password?uid={uid}&token={token}"
-            )
-            print("RESET LINK:", reset_link)
-            print("RENDERING TEMPLATE...")
-            html_content=render_to_string(
-                "users/reset_password_email.html",
-                {"reset_link":reset_link}
-            )
-            print("TEMPLATE RENDERED")
-            text_content = strip_tags(html_content)
-            print("CREATING EMAIL...")
-            email_message=EmailMultiAlternatives(
-                subject="Collab Notes password reset request",
-                body=text_content,
-                from_email=None,
-                to=[user.email],
-            )
-            email_message.attach_alternative(html_content, "text/html")
-            print("SENDING EMAIL...")
-            
-            email_message.send()
-            print("EMAIL SENT SUCCESSFULLY")
-        except Exception as e:
-            print("Email error:", e)
+        uid=urlsafe_base64_encode(force_bytes(user.pk))
+        token=token_generator.make_token(user)
+        # print("uid "+uid)
+        reset_link=(
+            f"{settings.FRONTEND_URL}/reset-password?uid={uid}&token={token}"
+        )
+        html_content=render_to_string(
+            "users/reset_password_email.html",
+            {"reset_link":reset_link}
+        )
+        text_content = strip_tags(html_content)
+        email_message=EmailMultiAlternatives(
+            subject="Collab Notes password reset request",
+            body=text_content,
+            from_email=None,
+            to=[user.email],
+        )
+        email_message.attach_alternative(html_content, "text/html")
+        email_message.send()
     return Response({"message":"If user exit, email sent"},status=HTTP_200_OK)
     
 @api_view(['POST'])
