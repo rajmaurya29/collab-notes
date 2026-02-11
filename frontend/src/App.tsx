@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import SignupPage from './pages/SignupPage';
 import LoginPage from './pages/LoginPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
 import DashboardPage from './pages/DashboardPage';
 import EditorPage from './pages/EditorPage';
 import LogoutPage from './pages/LogoutPage';
@@ -17,6 +18,7 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route 
           path="/dashboard" 
           element={
