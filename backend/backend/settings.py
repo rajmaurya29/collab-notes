@@ -267,21 +267,14 @@ else:
     ]
 
 #sending mail
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL")
 
 # if ENVIRONMENT == "production":
 #     STATIC_ROOT = BASE_DIR / "staticfiles"
 FRONTEND_URL=os.environ.get("FRONTEND_URL")
-
+SENDGRID_API_KEY=os.environ.get("SENDGRID_API_KEY")
 # SESSION_COOKIE_SAMESITE = 'None'
 # SESSION_COOKIE_SECURE = False  # True only in HTTPS
 # CSRF_COOKIE_SAMESITE = 'None'

@@ -22,6 +22,8 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.conf import settings
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
@@ -154,24 +156,33 @@ def forgot_password(request):
         token=token_generator.make_token(user)
         # print("uid "+uid)
         reset_link=(
-            f"{settings.FRONTEND_URL}reset-password?uid={uid}&token={token}"
+            f"{settings.FRONTEND_URL}/reset-password?uid={uid}&token={token}"
         )
         html_content=render_to_string(
-            "reset_password_email.html",
+            "users/reset_password_email.html",
             {"reset_link":reset_link}
         )
-        text_content = strip_tags(html_content)
-        email_message=EmailMultiAlternatives(
-            subject="Collab Notes password reset request",
-            body=text_content,
-            from_email=None,
-            to=[user.email],
-        )
-        email_message.attach_alternative(html_content, "text/html")
+        
+        # text_content = strip_tags(html_content)
+        # email_message=EmailMultiAlternatives(
+        #     subject="Collab Notes password reset request",
+        #     body=text_content,
+        #     from_email=None,
+        #     to=[user.email],
+        # )
+        # email_message.attach_alternative(html_content, "text/html")
+        # email_message.send()
         try:
-            email_message.send()
+            message=Mail(
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to_emails=user.email,
+                subject="Collab Notes password reset request",
+                html_content=html_content
+            )
+            sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
+            sg.send(message)
         except Exception as e:
-            print("Email error:", e)
+            print("sendgrid error:",e)
     return Response({"message":"If user exit, email sent"},status=HTTP_200_OK)
     
 @api_view(['POST'])
