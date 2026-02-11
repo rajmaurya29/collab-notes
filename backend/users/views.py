@@ -72,6 +72,7 @@ def registerUser(request):
     try:
         validate_email(data['email'])
         validate_password(data["password"])
+        # print("flag1")
         user=User.objects.create_user(
             first_name=data["name"],
             username=data["email"],
@@ -80,9 +81,10 @@ def registerUser(request):
         )   
         user.is_active=False
         user.save()
+        # print("flag2")
         
         # serializer=UserSerializer(user,many=False)
-        # return Response(serializer.data)
+        # return Response({"message":"ok"})
         email=data.get("email")
 
         user=User.objects.filter(email=email).first()
@@ -94,9 +96,10 @@ def registerUser(request):
             email_url=(
                 f"{settings.FRONTEND_URL}/verify-email?uid={uid}&token={token}"
             )
+            # print("flag 3")
             html_content=render_to_string(
                 "users/verify_email.html",
-                {"verify_email_link":email_url}
+                {"email_url":email_url}
             )
             
             try:
@@ -114,8 +117,8 @@ def registerUser(request):
     except ValidationError as e:
         message={"message":e.messages}
         return Response(message,status=HTTP_400_BAD_REQUEST)
-    except:
-        message={"message":"Invalid user or user already exist"}
+    except Exception as e:
+        message={"message":str(e)}
         return Response(message,status=HTTP_400_BAD_REQUEST)
 
 
@@ -190,15 +193,16 @@ def forgot_password(request):
         except Exception as e:
             print("sendgrid error:",e)
     return Response({"message":"If user exit, email sent"},status=HTTP_200_OK)
-  
+
+#verify email for register  
 @api_view(['POST'])
 def verify_email(request):
     data=request.data
     uid=data['uid']
     token=data['token']
-    password=data['password']
+    
 
-    if not uid or not token or not password:
+    if not uid or not token :
         return Response({"message":"Invalid attempt"},status=HTTP_400_BAD_REQUEST)
     try:
         user_id=force_str(urlsafe_base64_decode(uid))
@@ -218,7 +222,7 @@ def verify_email(request):
     return Response({"message":"Email verified Successfully"},
                     status=HTTP_200_OK)
 
-  
+
 @api_view(['POST'])
 def reset_password(request):
     data=request.data
