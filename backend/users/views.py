@@ -175,6 +175,41 @@ def forgot_password(request):
     return Response({"message":"If user exit, email sent"},status=HTTP_200_OK)
     
 @api_view(['POST'])
+def verify_email(request):
+    data=request.data
+    email=data.get("email")
+
+    # if not email:
+    #     return Response({"message":"If user exit, email sent"})
+    
+    user=User.objects.filter(email=email).first()
+
+    if user:
+        uid=urlsafe_base64_encode(force_bytes(user.pk))
+        token=token_generator.make_token(user)
+        # print("uid "+uid)
+        verify_email_link=(
+            f"{settings.FRONTEND_URL}verify-email?uid={uid}&token={token}"
+        )
+        html_content=render_to_string(
+            "verify_email.html",
+            {"verify_email_link":verify_email_link}
+        )
+        text_content = strip_tags(html_content)
+        email_message=EmailMultiAlternatives(
+            subject="Collab Notes verify email request",
+            body=text_content,
+            from_email=None,
+            to=[user.email],
+        )
+        email_message.attach_alternative(html_content, "text/html")
+        try:
+            email_message.send()
+        except Exception as e:
+            print("Email error:", e)
+    return Response({"message":"If user exit, email sent"},status=HTTP_200_OK)
+    
+@api_view(['POST'])
 def reset_password(request):
     data=request.data
     uid=data['uid']
