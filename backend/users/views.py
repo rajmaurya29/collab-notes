@@ -78,8 +78,39 @@ def registerUser(request):
             email=data["email"],
             password=data["password"]
         )   
-        serializer=UserSerializer(user,many=False)
-        return Response(serializer.data)
+        user.is_active=False
+        user.save()
+        
+        # serializer=UserSerializer(user,many=False)
+        # return Response(serializer.data)
+        email=data.get("email")
+
+        user=User.objects.filter(email=email).first()
+
+        if user:
+            uid=urlsafe_base64_encode(force_bytes(user.pk))
+            token=token_generator.make_token(user)
+            # print("uid "+uid)
+            email_url=(
+                f"{settings.FRONTEND_URL}/verify-email?uid={uid}&token={token}"
+            )
+            html_content=render_to_string(
+                "users/verify_email.html",
+                {"verify_email_link":email_url}
+            )
+            
+            try:
+                message=Mail(
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to_emails=user.email,
+                    subject="Collab Notes verify email request",
+                    html_content=html_content
+                )
+                sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
+                sg.send(message)
+            except Exception as e:
+                print("sendgrid error:",e)
+        return Response({"message":"Verify email sent"},status=HTTP_200_OK)       
     except ValidationError as e:
         message={"message":e.messages}
         return Response(message,status=HTTP_400_BAD_REQUEST)
@@ -122,22 +153,6 @@ def fetchUser(request):
     userData=UserSerializer(request.user)
     return Response(userData.data)
 
-# @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
-# def send_email(request):
-#     if not request.user.is_authenticated:
-#         return Response({"message":"not authenticated"},status=400)
-#     user=request.user
-#     print(user.email)
-#     send_mail(
-#         subject="Test Mail",
-#         message="Hello from DRF backend",
-#         from_email=None,
-#         recipient_list=[user.email],
-#         fail_silently=False,
-#     )
-#     return Response({"message":"email sent"})
-
 
 #forgot password
 token_generator=PasswordResetTokenGenerator()
@@ -163,15 +178,6 @@ def forgot_password(request):
             {"reset_link":reset_link}
         )
         
-        # text_content = strip_tags(html_content)
-        # email_message=EmailMultiAlternatives(
-        #     subject="Collab Notes password reset request",
-        #     body=text_content,
-        #     from_email=None,
-        #     to=[user.email],
-        # )
-        # email_message.attach_alternative(html_content, "text/html")
-        # email_message.send()
         try:
             message=Mail(
                 from_email=settings.DEFAULT_FROM_EMAIL,
@@ -184,42 +190,35 @@ def forgot_password(request):
         except Exception as e:
             print("sendgrid error:",e)
     return Response({"message":"If user exit, email sent"},status=HTTP_200_OK)
-    
+  
 @api_view(['POST'])
 def verify_email(request):
     data=request.data
-    email=data.get("email")
+    uid=data['uid']
+    token=data['token']
+    password=data['password']
 
-    # if not email:
-    #     return Response({"message":"If user exit, email sent"})
-    
-    user=User.objects.filter(email=email).first()
+    if not uid or not token or not password:
+        return Response({"message":"Invalid attempt"},status=HTTP_400_BAD_REQUEST)
+    try:
+        user_id=force_str(urlsafe_base64_decode(uid))
+        user=User.objects.get(id=user_id)
+    except :
+        return Response(
+            {"message": "Invalid verify link"},
+            status=HTTP_400_BAD_REQUEST
+        )
 
-    if user:
-        uid=urlsafe_base64_encode(force_bytes(user.pk))
-        token=token_generator.make_token(user)
-        # print("uid "+uid)
-        verify_email_link=(
-            f"{settings.FRONTEND_URL}verify-email?uid={uid}&token={token}"
-        )
-        html_content=render_to_string(
-            "verify_email.html",
-            {"verify_email_link":verify_email_link}
-        )
-        text_content = strip_tags(html_content)
-        email_message=EmailMultiAlternatives(
-            subject="Collab Notes verify email request",
-            body=text_content,
-            from_email=None,
-            to=[user.email],
-        )
-        email_message.attach_alternative(html_content, "text/html")
-        try:
-            email_message.send()
-        except Exception as e:
-            print("Email error:", e)
-    return Response({"message":"If user exit, email sent"},status=HTTP_200_OK)
+    if not token_generator.check_token(user,token):
+        return Response({"message":" Token expired or invalid"},status=HTTP_400_BAD_REQUEST)
     
+    user.is_active=True
+    user.save()
+
+    return Response({"message":"Email verified Successfully"},
+                    status=HTTP_200_OK)
+
+  
 @api_view(['POST'])
 def reset_password(request):
     data=request.data

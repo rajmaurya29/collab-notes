@@ -10,6 +10,7 @@ urlpatterns = [
     # path('mail/',views.send_email,name='send_email'),
     path('forgot-password/',views.forgot_password,name='forgot-password'),
     path('reset-password/',views.reset_password,name='reset-password'),
+    path('verify-email/',views.verify_email,name='verify-email'),
 
    
 ]
