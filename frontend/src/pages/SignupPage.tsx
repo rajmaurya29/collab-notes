@@ -1,17 +1,14 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAppDispatch } from '../store/hooks';
+import {  Link } from 'react-router-dom';
 import Logo from '../components/Logo';
 import ThemeToggle from '../components/ThemeToggle';
 import FormInput from '../components/FormInput';
 import Loader from '../components/Loader';
 import axios  from 'axios';
-import { loginUser } from '../store/slices/authSlice';
 const API_URL = import.meta.env.VITE_API_URL as string;
 
 const SignupPage: React.FC = () => {
-  const navigate = useNavigate();
-  const dispatch = useAppDispatch();
+ 
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
