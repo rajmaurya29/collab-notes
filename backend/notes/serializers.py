@@ -16,3 +16,8 @@ class NoteDetailSerializer(serializers.ModelSerializer):
         fields='__all__'
     def get_ownerName(self,obj):
         return obj.owner.first_name
+    
+class NoteShareSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Note
+        fields=['is_shared']

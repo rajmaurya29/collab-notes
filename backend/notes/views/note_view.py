@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated,IsAdminUser
 from notes.models import Note
-from notes.serializers import NoteSerializer,NoteDetailSerializer
+from notes.serializers import NoteSerializer,NoteDetailSerializer,NoteShareSerializer
 from rest_framework.status import *
 
 @api_view(['POST','GET'])
@@ -30,7 +30,8 @@ def All_New_Note(request):
 def Individual_Note(request,id):
     if request.method=="GET":
         try:
-            note=Note.objects.get(                
+            note=Note.objects.get(   
+                owner=request.user,             
                 id=id)
             serializer=NoteDetailSerializer(note,many=False)
             return Response(serializer.data)
@@ -40,7 +41,7 @@ def Individual_Note(request,id):
     elif request.method=='PUT':
         try:
             note=Note.objects.get(
-            #    owner=request.user,
+               owner=request.user,
                id=id)  
             note.title=request.data['title']
             note.content=request.data['content']
@@ -60,3 +61,58 @@ def Individual_Note(request,id):
             return Response({"message":"deleted successfully"})
         except:
             return Response({"message":"cannot be deleted"},status=HTTP_400_BAD_REQUEST)
+        
+
+
+@api_view(['GET','PUT'])
+@permission_classes([IsAuthenticated])
+def Shared_note(request,token):
+    if request.method=="GET":
+        # print("run")
+        try:
+            note=Note.objects.get(              
+                share_token=token,
+                is_shared=True)
+            
+            serializer=NoteDetailSerializer(note,many=False)
+            return Response(serializer.data)
+        except:
+            
+            return Response({"message":"Not found"},status=HTTP_400_BAD_REQUEST)
+    elif request.method=='PUT':
+        try:
+            note=Note.objects.get(              
+                share_token=token,
+                is_shared=True) 
+            note.title=request.data['title']
+            note.content=request.data['content']
+            note.category=request.data['category']
+            serializer=NoteDetailSerializer(note,many=False)
+            note.save()
+            return Response(serializer.data)
+        except:
+            return Response({"message":"cannot be edited"},status=HTTP_400_BAD_REQUEST)
+        
+
+@api_view(['GET','PUT'])
+@permission_classes([IsAuthenticated])
+def toggle_shared(request,id):
+    if request.method=='GET':
+        try:
+            note=Note.objects.get(   
+                owner=request.user,             
+                id=id)
+            serializer=NoteShareSerializer(note,many=False)
+            return Response(serializer.data)
+        except:
+            return Response({"message":"Sharing detail not found"},status=HTTP_400_BAD_REQUEST)
+    elif request.method=='PUT':
+        try:
+            note=Note.objects.get(
+               owner=request.user,
+               id=id)  
+            note.is_shared= not note.is_shared
+            note.save()
+            return Response({"message":"shared button toggled"})
+        except:
+            return Response({"message":"cannot be toggled"},status=HTTP_400_BAD_REQUEST)
