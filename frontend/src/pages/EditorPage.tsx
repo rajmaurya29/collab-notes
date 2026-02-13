@@ -131,6 +131,8 @@ function EditorPage() {
   const [isWsConnected, setIsWsConnected] = useState(false);
   const [connectedUsers, setConnectedUsers] = useState<Record<number, string>>({});
   const [showUsersDropdown, setShowUsersDropdown] = useState(false);
+  const [isShared, setIsShared] = useState(false);
+  const [shareToken, setShareToken] = useState<string>('');
   const bodyRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -165,6 +167,8 @@ function EditorPage() {
           setFetchedNote(fetchedNote);
           setTitle(fetchedNote.title);
           setCategory(fetchedNote.category || '');
+          setIsShared(fetchedNote.is_shared || false);
+          setShareToken(fetchedNote.share_token || '');
           setIsLoadingNote(false);
         })
         .catch((error) => {
@@ -269,18 +273,53 @@ function EditorPage() {
   const handleShare = async () => {
     if (!id) return;
     
-    const shareUrl = `${window.location.origin}/editor/${id}`;
+    // If owner, copy the shared link with token
+    if (isOwner && shareToken) {
+      const shareUrl = `${window.location.origin}/editor/share/${shareToken}`;
+      
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setIsShareCopied(true);
+        setShowCopyNotification(true);
+        setTimeout(() => {
+          setIsShareCopied(false);
+        }, 1000);
+        setTimeout(() => setShowCopyNotification(false), 2000);
+      } catch (err) {
+        console.error('Failed to copy URL:', err);
+      }
+    }
+  };
+
+  const handleToggleSharing = async () => {
+    if (!id || !isOwner) return;
     
     try {
-      await navigator.clipboard.writeText(shareUrl);
-      setIsShareCopied(true);
-      setShowCopyNotification(true);
-      setTimeout(() => {
-        setIsShareCopied(false);
-      }, 1000);
-      setTimeout(() => setShowCopyNotification(false), 2000);
+      const API_URL = import.meta.env.VITE_API_URL;
+      const response = await fetch(`${API_URL}/notes/toggle_shared/${id}/`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        // Toggle the local state
+        setIsShared(!isShared);
+        toast.success(isShared ? 'Sharing disabled' : 'Sharing enabled', {
+          autoClose: 2000,
+          pauseOnHover: false,
+          pauseOnFocusLoss: false,
+        });
+      }
     } catch (err) {
-      console.error('Failed to copy URL:', err);
+      console.error('Failed to toggle sharing:', err);
+      toast.error('Failed to toggle sharing', {
+        autoClose: 2000,
+        pauseOnHover: false,
+        pauseOnFocusLoss: false,
+      });
     }
   };
 
@@ -337,24 +376,52 @@ function EditorPage() {
         </div>
 
         <div className="editor-nav-right">
-          <button 
-            className="share-btn" 
-            onClick={handleShare}
-            aria-label="Share note"
-            title="Copy share link"
-          >
-            {isShareCopied ? (
-              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path fillRule="evenodd" clipRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fill="currentColor"/>
-              </svg>
-            ) : (
-              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M15 8a3 3 0 100-6 3 3 0 000 6zM15 18a3 3 0 100-6 3 3 0 000 6zM5 13a3 3 0 100-6 3 3 0 000 6z" fill="currentColor"/>
-                <path d="M7.59 11.51l4.82 2.98M12.41 6.51l-4.82 2.98" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-            )}
-            {showCopyNotification && <span className="copy-notification">Copied!</span>}
-          </button>
+          {isOwner && (
+            <>
+              <button 
+                className={`toggle-share-btn ${isShared ? 'active' : ''}`}
+                onClick={handleToggleSharing}
+                aria-label={isShared ? 'Disable sharing' : 'Enable sharing'}
+                title={isShared ? 'Disable sharing' : 'Enable sharing'}
+              >
+                {isShared ? (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2C9.243 2 7 4.243 7 7v3H6c-1.103 0-2 .897-2 2v8c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-8c0-1.103-.897-2-2-2h-1V7c0-2.757-2.243-5-5-5zm3 8V7c0-1.654-1.346-3-3-3S9 5.346 9 7v3h6z" fill="currentColor"/>
+                    </svg>
+                    <span>Shared</span>
+                  </>
+                ) : (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M18 10V7c0-2.757-2.243-5-5-5-2.415 0-4.434 1.721-4.898 4H6.414l2.293-2.293-1.414-1.414L3.586 6l3.707 3.707 1.414-1.414L6.414 6h1.688C8.566 8.279 10.585 10 13 10h1v2H6c-1.103 0-2 .897-2 2v8c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-8c0-1.103-.897-2-2-2h-8v-2h6z" fill="currentColor"/>
+                    </svg>
+                    <span>Private</span>
+                  </>
+                )}
+              </button>
+              {isShared && (
+                <button 
+                  className="share-btn" 
+                  onClick={handleShare}
+                  aria-label="Copy share link"
+                  title="Copy share link"
+                >
+                  {isShareCopied ? (
+                    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path fillRule="evenodd" clipRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fill="currentColor"/>
+                    </svg>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M15 8a3 3 0 100-6 3 3 0 000 6zM15 18a3 3 0 100-6 3 3 0 000 6zM5 13a3 3 0 100-6 3 3 0 000 6z" fill="currentColor"/>
+                      <path d="M7.59 11.51l4.82 2.98M12.41 6.51l-4.82 2.98" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                  )}
+                  {showCopyNotification && <span className="copy-notification">Copied!</span>}
+                </button>
+              )}
+            </>
+          )}
           <div className="editor-users-dropdown" ref={dropdownRef}>
             <button 
               className="users-dropdown-trigger"

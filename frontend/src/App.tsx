@@ -5,6 +5,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import DashboardPage from './pages/DashboardPage';
 import EditorPage from './pages/EditorPage';
+import SharedEditorPage from './pages/SharedEditorPage';
 import LogoutPage from './pages/LogoutPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Toaster from './components/Toaster';
@@ -32,6 +33,14 @@ function App() {
           element={
             <ProtectedRoute>
               <EditorPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/editor/share/:token" 
+          element={
+            <ProtectedRoute>
+              <SharedEditorPage />
             </ProtectedRoute>
           } 
         />
