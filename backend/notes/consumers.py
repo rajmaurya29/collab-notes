@@ -1,10 +1,13 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 
+current_user={}
 class NoteConsumer(AsyncWebsocketConsumer):
-    current_user={}
+    
     async def connect(self):
+        
         self.note_id = self.scope['url_route']['kwargs']['note_id']
+        current_user[self.note_id]=current_user.get(self.note_id,{})
         self.room_group_name = f'note_{self.note_id}'
 
         await self.channel_layer.group_add(
@@ -23,8 +26,8 @@ class NoteConsumer(AsyncWebsocketConsumer):
         # print(sender_id)
         if data.get("type")=='join':
             username=data.get('username')
-            if sender_id not in self.current_user:
-                self.current_user[str(sender_id)]=username
+            if str(sender_id) not in current_user[self.note_id]:
+                current_user[self.note_id][str(sender_id)]=username
             # self.current_user.append(username)
             # print("joined")
             # current_username=list(self.current_user.values())
@@ -35,7 +38,7 @@ class NoteConsumer(AsyncWebsocketConsumer):
                     'type': 'user_joined',
                     'username': username,
                     'senderId':sender_id,
-                    'current_user':self.current_user
+                    'current_user':current_user[self.note_id]
                 }
             )
             return
@@ -44,9 +47,9 @@ class NoteConsumer(AsyncWebsocketConsumer):
             # print("left")
             sender_id=data.get("senderId")
             username=data.get("username")
-            if str(sender_id) in self.current_user:
+            if str(sender_id) in current_user[self.note_id]:
                 # print("removed")
-                self.current_user.pop(str(sender_id))
+                current_user[self.note_id].pop(str(sender_id))
                 # print(self.current_user)
             # self.current_user.remove(username)
             # current_username=list(self.current_user.values())
@@ -57,7 +60,7 @@ class NoteConsumer(AsyncWebsocketConsumer):
                     'type': 'user_left',
                     'username': username,
                     'senderId':sender_id,
-                    'current_user':self.current_user
+                    'current_user':current_user[self.note_id]
                 }
             )
             return
